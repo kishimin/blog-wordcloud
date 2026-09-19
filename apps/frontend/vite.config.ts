@@ -21,12 +21,12 @@ export default defineConfig({
         "src/main.tsx",
       ],
       // 80% is the default so a bare local `vitest run --coverage` still
-      // enforces it. CI opts OUT by setting COVERAGE_THRESHOLD=0 for push
-      // (Small only) and nightly, whose narrower or differently scoped
-      // ADR-0043 test set must not fail the build over code a different
-      // test size is meant to cover; the pull_request gate leaves it unset
-      // and gets the enforced default. Kept in sync with the identical
-      // block in apps/api/vitest.config.ts.
+      // enforces it. CI keeps it enforced on pull_request (COVERAGE_THRESHOLD=1)
+      // and opts OUT with COVERAGE_THRESHOLD=0 for push (Small only) and
+      // nightly, whose narrower or differently scoped ADR-0043 test set must
+      // not fail the build over code a different test size is meant to cover
+      // (ADR-0065). Kept in sync with the identical block in
+      // apps/api/vitest.config.ts.
       thresholds:
         process.env.COVERAGE_THRESHOLD === "0"
           ? undefined
