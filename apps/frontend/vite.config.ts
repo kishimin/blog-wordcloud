@@ -25,7 +25,8 @@ export default defineConfig({
       // (Small only) and nightly, whose narrower or differently scoped
       // ADR-0043 test set must not fail the build over code a different
       // test size is meant to cover; the pull_request gate leaves it unset
-      // and gets the enforced default.
+      // and gets the enforced default. Kept in sync with the identical
+      // block in apps/api/vitest.config.ts.
       thresholds:
         process.env.COVERAGE_THRESHOLD === "0"
           ? undefined
