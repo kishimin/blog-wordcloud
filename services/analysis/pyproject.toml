@@ -28,7 +28,10 @@ branch = true
 source = ["src/analysis"]
 
 [tool.coverage.report]
-fail_under = 80
+# No static fail_under: CI passes --cov-fail-under explicitly per event
+# (80 on pull_request only), since a static value here would also apply
+# to push (Small only) and nightly, which run a narrower or differently
+# scoped test set under ADR-0043.
 show_missing = true
 
 [tool.ruff]
