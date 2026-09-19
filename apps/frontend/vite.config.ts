@@ -20,18 +20,21 @@ export default defineConfig({
         // behavior worth a test. Delete this line if that changes.
         "src/main.tsx",
       ],
-      // Enforced only when CI sets COVERAGE_THRESHOLD (the pull_request
-      // gate). Coverage is collected on every event, but a hardcoded 80%
-      // here would also apply to push (Small only) and nightly, which run a
-      // narrower or differently scoped ADR-0043 test set than "overall".
-      thresholds: process.env.COVERAGE_THRESHOLD
-        ? {
-            lines: Number(process.env.COVERAGE_THRESHOLD),
-            statements: Number(process.env.COVERAGE_THRESHOLD),
-            functions: Number(process.env.COVERAGE_THRESHOLD),
-            branches: Number(process.env.COVERAGE_THRESHOLD),
-          }
-        : undefined,
+      // 80% is the default so a bare local `vitest run --coverage` still
+      // enforces it. CI opts OUT by setting COVERAGE_THRESHOLD=0 for push
+      // (Small only) and nightly, whose narrower or differently scoped
+      // ADR-0043 test set must not fail the build over code a different
+      // test size is meant to cover; the pull_request gate leaves it unset
+      // and gets the enforced default.
+      thresholds:
+        process.env.COVERAGE_THRESHOLD === "0"
+          ? undefined
+          : {
+              lines: 80,
+              statements: 80,
+              functions: 80,
+              branches: 80,
+            },
     },
   },
 });

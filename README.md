@@ -218,19 +218,19 @@ Both return the same shape:
 
 ### Root (npm workspace: frontend and api)
 
-| Command                                            | Description                                                                                    |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `npm install`                                      | Install dependencies for `apps/frontend` and `apps/api`.                                       |
-| `npm run format`                                   | Format the TypeScript/JSON/Markdown files with Prettier.                                       |
-| `npm run format:check`                             | Check formatting without writing changes.                                                      |
-| `npm run typecheck`                                | Type check every workspace package (`tsc --noEmit`).                                           |
-| `npm run lint`                                     | Lint every workspace package (ESLint).                                                         |
-| `npm run test`                                     | Run every workspace package's Vitest suite.                                                    |
-| `npm run test:small`                               | Run only `*.small.test.*` files (ADR-0004/0043: the set CI runs on push).                      |
-| `npm run test:pr`                                  | Run Small and Medium test files (the set CI runs on pull requests).                            |
-| `npm run test:nightly`                             | Run Small, Medium, and Large test files (the set CI runs on schedule/`workflow_dispatch`).     |
-| `npm run test:coverage`                            | Run every workspace package's Vitest suite with coverage (80% threshold enforced per package). |
-| `npm run test:coverage:small` / `:pr` / `:nightly` | Same coverage run, scoped to the matching test-size set above.                                 |
+| Command                                            | Description                                                                                                                                                                                                                         |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm install`                                      | Install dependencies for `apps/frontend` and `apps/api`.                                                                                                                                                                            |
+| `npm run format`                                   | Format the TypeScript/JSON/Markdown files with Prettier.                                                                                                                                                                            |
+| `npm run format:check`                             | Check formatting without writing changes.                                                                                                                                                                                           |
+| `npm run typecheck`                                | Type check every workspace package (`tsc --noEmit`).                                                                                                                                                                                |
+| `npm run lint`                                     | Lint every workspace package (ESLint).                                                                                                                                                                                              |
+| `npm run test`                                     | Run every workspace package's Vitest suite.                                                                                                                                                                                         |
+| `npm run test:small`                               | Run only `*.small.test.*` files (ADR-0004/0043: the set CI runs on push).                                                                                                                                                           |
+| `npm run test:pr`                                  | Run Small and Medium test files (the set CI runs on pull requests).                                                                                                                                                                 |
+| `npm run test:nightly`                             | Run Small, Medium, and Large test files (the set CI runs on schedule/`workflow_dispatch`).                                                                                                                                          |
+| `npm run test:coverage`                            | Run every workspace package's Vitest suite with coverage (80% threshold enforced by default).                                                                                                                                       |
+| `npm run test:coverage:small` / `:pr` / `:nightly` | Same coverage run, scoped to the matching test-size set above. CI sets `COVERAGE_THRESHOLD=0` to skip the threshold for `:small` (push) and `:nightly`, since those don't run the complete suite; `:pr` keeps the enforced default. |
 
 ### Frontend (`apps/frontend`)
 
@@ -249,17 +249,17 @@ Both return the same shape:
 
 ### Analysis Service (`services/analysis`, run from that directory)
 
-| Command                                    | Description                                                                                    |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| `uv sync`                                  | Install dependencies into a managed virtual environment.                                       |
-| `uv run ruff format --check .`             | Check formatting without writing changes.                                                      |
-| `uv run ruff check .`                      | Lint the service.                                                                              |
-| `uv run mypy src tests`                    | Type check the service and its tests (strict mode).                                            |
-| `uv run pytest`                            | Run the test suite.                                                                            |
-| `uv run pytest -m small`                   | Run only tests marked `small` (ADR-0004/0043: the set CI runs on push).                        |
-| `uv run pytest -m "small or medium"`       | Run Small and Medium tests (the set CI runs on pull requests).                                 |
-| `uv run pytest --cov`                      | Run the test suite with coverage (80% threshold enforced by `fail_under` in `pyproject.toml`). |
-| `uv run uvicorn analysis.app:app --reload` | Start the service with auto-reload.                                                            |
+| Command                                    | Description                                                                                                                                                          |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `uv sync`                                  | Install dependencies into a managed virtual environment.                                                                                                             |
+| `uv run ruff format --check .`             | Check formatting without writing changes.                                                                                                                            |
+| `uv run ruff check .`                      | Lint the service.                                                                                                                                                    |
+| `uv run mypy src tests`                    | Type check the service and its tests (strict mode).                                                                                                                  |
+| `uv run pytest`                            | Run the test suite.                                                                                                                                                  |
+| `uv run pytest -m small`                   | Run only tests marked `small` (ADR-0004/0043: the set CI runs on push).                                                                                              |
+| `uv run pytest -m "small or medium"`       | Run Small and Medium tests (the set CI runs on pull requests).                                                                                                       |
+| `uv run pytest --cov`                      | Run the test suite with coverage (80% threshold enforced by `fail_under` in `pyproject.toml` by default; CI passes `--cov-fail-under=0` to skip it on push/nightly). |
+| `uv run uvicorn analysis.app:app --reload` | Start the service with auto-reload.                                                                                                                                  |
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 

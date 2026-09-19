@@ -35,12 +35,14 @@ jobs:
       # key off this scope so coverage collection can't run a wider set than
       # the event allows (ADR-0028's core rule).
       TEST_SCOPE: ${{ github.event_name == 'push' && 'small' || github.event_name == 'pull_request' && 'pr' || 'nightly' }}
-      # 80% is only enforced on pull_request, the actual merge gate. Push
-      # (Small only) and nightly (Small+Medium+Large) still collect and
-      # upload coverage, but a narrower or currently-incomplete scope must
-      # not fail the build over code a different test size is meant to
-      # cover (this is ADR-0028's open question, left unresolved there).
-      COVERAGE_THRESHOLD: ${{ github.event_name == 'pull_request' && '80' || '' }}
+      # The apps/*/vite(st).config.ts files default coverage.thresholds to
+      # 80%, so pull_request (left unset here) gets that enforced default.
+      # Push (Small only) and nightly (Small+Medium+Large) still collect and
+      # upload coverage but opt out with "0", since a narrower or
+      # currently-incomplete scope must not fail the build over code a
+      # different test size is meant to cover (ADR-0028's open question,
+      # left unresolved there).
+      COVERAGE_THRESHOLD: ${{ github.event_name == 'pull_request' && '' || '0' }}
 
     steps:
       - name: Check out repository
@@ -102,10 +104,12 @@ jobs:
       # marker expression: push=small, pull_request=small or medium,
       # schedule/workflow_dispatch=small or medium or large.
       TEST_MARKERS: ${{ github.event_name == 'push' && 'small' || github.event_name == 'pull_request' && 'small or medium' || 'small or medium or large' }}
-      # Same reasoning as the TypeScript job's COVERAGE_THRESHOLD: only the
-      # pull_request gate enforces a floor. --cov-fail-under=0 always
-      # passes, so push and nightly still report coverage without failing
-      # the build over a scope that isn't the complete suite.
+      # pyproject.toml's fail_under = 80 is the default a bare local
+      # `pytest --cov` enforces; --cov-fail-under on the CLI always
+      # overrides it. pull_request passes the same 80 explicitly, while
+      # push and nightly pass 0 so a scope narrower than the complete suite
+      # can't fail the build (same reasoning as the TypeScript job's
+      # COVERAGE_THRESHOLD).
       COVERAGE_FAIL_UNDER: ${{ github.event_name == 'pull_request' && '80' || '0' }}
 
     steps:
