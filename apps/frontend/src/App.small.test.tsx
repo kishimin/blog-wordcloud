@@ -14,8 +14,8 @@ describe("App", () => {
   it("exposes the top page content inside a main landmark", () => {
     render(<App />);
 
-    expect(
-      screen.getByRole("main").querySelector("h1"),
-    ).toHaveTextContent("Kotogumo");
+    expect(screen.getByRole("main").querySelector("h1")).toHaveTextContent(
+      "Kotogumo",
+    );
   });
 });
