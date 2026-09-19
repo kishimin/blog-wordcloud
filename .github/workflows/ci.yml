@@ -1,0 +1,163 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+# Read-only by default: no job here needs to write to the repository.
+permissions:
+  contents: read
+
+concurrency:
+  # event_name is part of the key because push and schedule/workflow_dispatch
+  # on main both resolve github.ref to refs/heads/main: without it, a push
+  # would cancel an in-flight nightly run (and vice versa) even though they
+  # run different ADR-0043 test-size scopes and neither should pre-empt the
+  # other.
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typescript-workspace:
+    name: TypeScript workspace (frontend, api)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # ADR-0043's push/pull_request/schedule schedule, applied through the
+      # apps/*/package.json scripts added for it: push runs Small, pull
+      # requests run Small+Medium, and schedule/workflow_dispatch run
+      # Small+Medium+Large. Both the plain test step and the coverage step
+      # key off this scope so coverage collection can't run a wider set than
+      # the event allows (ADR-0028's core rule).
+      TEST_SCOPE: ${{ github.event_name == 'push' && 'small' || github.event_name == 'pull_request' && 'pr' || 'nightly' }}
+      # The apps/*/vite(st).config.ts files default coverage.thresholds to
+      # 80%, so pull_request (left unset here) gets that enforced default.
+      # Push (Small only) and nightly (Small+Medium+Large) still collect and
+      # upload coverage but opt out with "0", since a narrower or
+      # currently-incomplete scope must not fail the build over code a
+      # different test size is meant to cover (ADR-0028's open question,
+      # left unresolved there).
+      COVERAGE_THRESHOLD: ${{ github.event_name == 'pull_request' && '' || '0' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      # Vite's build is not covered by typecheck alone (e.g. asset resolution
+      # and production-only code paths), so a broken build could otherwise
+      # reach main undetected.
+      - name: Build frontend
+        run: npm run build -w apps/frontend
+
+      - name: Test (${{ env.TEST_SCOPE }})
+        run: npm run test:${{ env.TEST_SCOPE }}
+
+      # Coverage collection also runs a test runner, so it follows the same
+      # ADR-0043 scope as the step above (ADR-0028: no invocation may bypass
+      # the schedule).
+      - name: Coverage (${{ env.TEST_SCOPE }})
+        run: npm run test:coverage:${{ env.TEST_SCOPE }}
+
+      - name: Upload coverage reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: typescript-coverage-report
+          path: apps/*/coverage
+          if-no-files-found: error
+          retention-days: 14
+
+  analysis-service:
+    name: Python analysis service
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: services/analysis
+    env:
+      # Same ADR-0043 schedule as the TypeScript job, expressed as a pytest
+      # marker expression: push=small, pull_request=small or medium,
+      # schedule/workflow_dispatch=small or medium or large.
+      TEST_MARKERS: ${{ github.event_name == 'push' && 'small' || github.event_name == 'pull_request' && 'small or medium' || 'small or medium or large' }}
+      # pyproject.toml's fail_under = 80 is the default a bare local
+      # `pytest --cov` enforces; --cov-fail-under on the CLI always
+      # overrides it. pull_request passes the same 80 explicitly, while
+      # push and nightly pass 0 so a scope narrower than the complete suite
+      # can't fail the build (same reasoning as the TypeScript job's
+      # COVERAGE_THRESHOLD).
+      COVERAGE_FAIL_UNDER: ${{ github.event_name == 'pull_request' && '80' || '0' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: true
+
+      # --locked fails fast if pyproject.toml and uv.lock drift apart,
+      # matching the guarantee `npm ci` already gives the TypeScript job.
+      - name: Install dependencies
+        run: uv sync --all-groups --locked
+
+      - name: Check formatting
+        run: uv run ruff format --check .
+
+      - name: Lint
+        run: uv run ruff check .
+
+      # Substitutes for the TypeScript projects' compilation step: mypy's
+      # strict mode is this service's equivalent of "type checking or
+      # compilation" since Python has no build step of its own. Tests are
+      # included so a typing mistake in a test fixture is also caught.
+      - name: Type check
+        run: uv run mypy src tests
+
+      - name: Test (${{ github.event_name }})
+        run: uv run pytest -m "$TEST_MARKERS"
+
+      # Coverage collection also runs pytest, so it applies the same marker
+      # expression as the step above (ADR-0028: no invocation may bypass the
+      # schedule).
+      - name: Coverage (${{ github.event_name }})
+        run: >-
+          uv run pytest -m "$TEST_MARKERS"
+          --cov --cov-report=xml --cov-report=term-missing
+          --cov-fail-under="$COVERAGE_FAIL_UNDER"
+
+      - name: Upload coverage report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: analysis-coverage-report
+          path: services/analysis/coverage.xml
+          if-no-files-found: error
+          retention-days: 14
