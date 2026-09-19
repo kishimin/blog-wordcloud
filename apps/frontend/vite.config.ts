@@ -14,10 +14,10 @@ export default defineConfig({
       exclude: [
         "src/tests/**",
         "src/vite-env.d.ts",
-        // Scaffolding with no decision of its own: main.tsx only mounts
-        // <App /> into the DOM. A test over it would restate that wiring
-        // instead of proving behavior, so it stays out of the denominator
-        // until it gains logic worth covering. Delete this line then.
+        // Mounts <App /> and guards against a missing #root element. That
+        // guard is unreachable unless index.html's markup changes, so it is
+        // a defensive check with no meaningful branch to exercise, not
+        // behavior worth a test. Delete this line if that changes.
         "src/main.tsx",
       ],
       thresholds: {
