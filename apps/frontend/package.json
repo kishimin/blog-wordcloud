@@ -10,7 +10,15 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:small": "vitest run --passWithNoTests small.test",
+    "test:medium": "vitest run --passWithNoTests medium.test",
+    "test:large": "vitest run --passWithNoTests large.test",
+    "test:pr": "vitest run --passWithNoTests small.test medium.test",
+    "test:nightly": "vitest run --passWithNoTests small.test medium.test large.test",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:small": "vitest run --coverage --passWithNoTests small.test",
+    "test:coverage:pr": "vitest run --coverage --passWithNoTests small.test medium.test",
+    "test:coverage:nightly": "vitest run --coverage --passWithNoTests small.test medium.test large.test"
   },
   "dependencies": {
     "react": "^19.3.0",
