@@ -17,6 +17,11 @@ packages = ["src/analysis"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "small: Tests that use one process without network, database, or filesystem access.",
+    "medium: Tests that may use localhost, a database, or the filesystem.",
+    "large: Tests that may use external systems or remote network access.",
+]
 
 [tool.coverage.run]
 branch = true
