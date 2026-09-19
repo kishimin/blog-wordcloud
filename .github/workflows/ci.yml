@@ -1,0 +1,100 @@
+name: CI (Pull Request)
+
+on:
+  pull_request:
+
+# Read-only by default: no job here needs to write to the repository.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-pull-request-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typescript-workspace:
+    name: TypeScript workspace (frontend, api)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      # Runs both apps' Vitest suites with coverage. Thresholds (80% for
+      # lines, statements, functions, and branches) are enforced per package
+      # by each apps/*/vitest.config.ts, so a shortfall fails this step.
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: typescript-coverage-report
+          path: apps/*/coverage
+          if-no-files-found: error
+          retention-days: 14
+
+  analysis-service:
+    name: Python analysis service
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: services/analysis
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Check formatting
+        run: uv run ruff format --check .
+
+      - name: Lint
+        run: uv run ruff check .
+
+      # Substitutes for the TypeScript projects' compilation step: mypy's
+      # strict mode is this service's equivalent of "type checking or
+      # compilation" since Python has no build step of its own.
+      - name: Type check
+        run: uv run mypy src
+
+      # fail_under = 80 in pyproject.toml enforces the overall coverage gate.
+      - name: Test with coverage
+        run: uv run pytest --cov --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: analysis-coverage-report
+          path: services/analysis/coverage.xml
+          if-no-files-found: error
+          retention-days: 14
