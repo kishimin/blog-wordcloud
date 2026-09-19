@@ -1,14 +1,20 @@
-name: CI (Pull Request)
+name: CI
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
 
 # Read-only by default: no job here needs to write to the repository.
 permissions:
   contents: read
 
 concurrency:
-  group: ci-pull-request-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -16,10 +22,20 @@ jobs:
     name: TypeScript workspace (frontend, api)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      # ADR-0043's push/pull_request/schedule schedule, applied through the
+      # apps/*/package.json scripts added for it: push runs Small, pull
+      # requests run Small+Medium, and schedule/workflow_dispatch run
+      # Small+Medium+Large. Both the plain test step and the coverage step
+      # key off this scope so coverage collection can't run a wider set than
+      # the event allows (ADR-0028's core rule).
+      TEST_SCOPE: ${{ github.event_name == 'push' && 'small' || github.event_name == 'pull_request' && 'pr' || 'nightly' }}
 
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -39,11 +55,20 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # Runs both apps' Vitest suites with coverage. Thresholds (80% for
-      # lines, statements, functions, and branches) are enforced per package
-      # by each apps/*/vitest.config.ts, so a shortfall fails this step.
-      - name: Test with coverage
-        run: npm run test:coverage
+      # Vite's build is not covered by typecheck alone (e.g. asset resolution
+      # and production-only code paths), so a broken build could otherwise
+      # reach main undetected.
+      - name: Build frontend
+        run: npm run build -w apps/frontend
+
+      - name: Test (${{ env.TEST_SCOPE }})
+        run: npm run test:${{ env.TEST_SCOPE }}
+
+      # Coverage collection also runs a test runner, so it follows the same
+      # ADR-0043 scope as the step above (ADR-0028: no invocation may bypass
+      # the schedule).
+      - name: Coverage (${{ env.TEST_SCOPE }})
+        run: npm run test:coverage:${{ env.TEST_SCOPE }}
 
       - name: Upload coverage reports
         if: ${{ !cancelled() }}
@@ -61,18 +86,27 @@ jobs:
     defaults:
       run:
         working-directory: services/analysis
+    env:
+      # Same ADR-0043 schedule as the TypeScript job, expressed as a pytest
+      # marker expression: push=small, pull_request=small or medium,
+      # schedule/workflow_dispatch=small or medium or large.
+      TEST_MARKERS: ${{ github.event_name == 'push' && 'small' || github.event_name == 'pull_request' && 'small or medium' || 'small or medium or large' }}
 
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install uv and Python
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           enable-cache: true
 
+      # --locked fails fast if pyproject.toml and uv.lock drift apart,
+      # matching the guarantee `npm ci` already gives the TypeScript job.
       - name: Install dependencies
-        run: uv sync --all-groups
+        run: uv sync --all-groups --locked
 
       - name: Check formatting
         run: uv run ruff format --check .
@@ -82,13 +116,19 @@ jobs:
 
       # Substitutes for the TypeScript projects' compilation step: mypy's
       # strict mode is this service's equivalent of "type checking or
-      # compilation" since Python has no build step of its own.
+      # compilation" since Python has no build step of its own. Tests are
+      # included so a typing mistake in a test fixture is also caught.
       - name: Type check
-        run: uv run mypy src
+        run: uv run mypy src tests
 
-      # fail_under = 80 in pyproject.toml enforces the overall coverage gate.
-      - name: Test with coverage
-        run: uv run pytest --cov --cov-report=xml --cov-report=term-missing
+      - name: Test (${{ github.event_name }})
+        run: uv run pytest -m "$TEST_MARKERS"
+
+      # Coverage collection also runs pytest, so it applies the same marker
+      # expression as the step above (ADR-0028: no invocation may bypass the
+      # schedule). fail_under = 80 in pyproject.toml enforces the threshold.
+      - name: Coverage (${{ github.event_name }})
+        run: uv run pytest -m "$TEST_MARKERS" --cov --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage report
         if: ${{ !cancelled() }}
