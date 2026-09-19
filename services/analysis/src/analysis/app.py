@@ -1,4 +1,8 @@
-# Placeholder until the health route is implemented via TDD.
 from fastapi import FastAPI
 
 app = FastAPI()
+
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
