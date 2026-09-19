@@ -47,3 +47,6 @@ Desktop.ini
 *.temp
 *.local
 *~
+
+# --- Local pull request drafts ---
+pull-request/
