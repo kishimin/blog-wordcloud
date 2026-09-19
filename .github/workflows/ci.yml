@@ -14,7 +14,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  # event_name is part of the key because push and schedule/workflow_dispatch
+  # on main both resolve github.ref to refs/heads/main: without it, a push
+  # would cancel an in-flight nightly run (and vice versa) even though they
+  # run different ADR-0043 test-size scopes and neither should pre-empt the
+  # other.
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -30,6 +35,12 @@ jobs:
       # key off this scope so coverage collection can't run a wider set than
       # the event allows (ADR-0028's core rule).
       TEST_SCOPE: ${{ github.event_name == 'push' && 'small' || github.event_name == 'pull_request' && 'pr' || 'nightly' }}
+      # 80% is only enforced on pull_request, the actual merge gate. Push
+      # (Small only) and nightly (Small+Medium+Large) still collect and
+      # upload coverage, but a narrower or currently-incomplete scope must
+      # not fail the build over code a different test size is meant to
+      # cover (this is ADR-0028's open question, left unresolved there).
+      COVERAGE_THRESHOLD: ${{ github.event_name == 'pull_request' && '80' || '' }}
 
     steps:
       - name: Check out repository
@@ -91,6 +102,11 @@ jobs:
       # marker expression: push=small, pull_request=small or medium,
       # schedule/workflow_dispatch=small or medium or large.
       TEST_MARKERS: ${{ github.event_name == 'push' && 'small' || github.event_name == 'pull_request' && 'small or medium' || 'small or medium or large' }}
+      # Same reasoning as the TypeScript job's COVERAGE_THRESHOLD: only the
+      # pull_request gate enforces a floor. --cov-fail-under=0 always
+      # passes, so push and nightly still report coverage without failing
+      # the build over a scope that isn't the complete suite.
+      COVERAGE_FAIL_UNDER: ${{ github.event_name == 'pull_request' && '80' || '0' }}
 
     steps:
       - name: Check out repository
@@ -126,9 +142,12 @@ jobs:
 
       # Coverage collection also runs pytest, so it applies the same marker
       # expression as the step above (ADR-0028: no invocation may bypass the
-      # schedule). fail_under = 80 in pyproject.toml enforces the threshold.
+      # schedule).
       - name: Coverage (${{ github.event_name }})
-        run: uv run pytest -m "$TEST_MARKERS" --cov --cov-report=xml --cov-report=term-missing
+        run: >-
+          uv run pytest -m "$TEST_MARKERS"
+          --cov --cov-report=xml --cov-report=term-missing
+          --cov-fail-under="$COVERAGE_FAIL_UNDER"
 
       - name: Upload coverage report
         if: ${{ !cancelled() }}
