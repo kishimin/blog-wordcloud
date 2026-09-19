@@ -9,11 +9,11 @@ export default defineConfig({
       reporter: ["text", "html", "lcov", "json-summary"],
       reportsDirectory: "./coverage",
       exclude: [
-        // Scaffolding with no decision of its own: it only starts the HTTP
-        // server and wires app.fetch to it. A test would restate that
-        // wiring instead of proving behavior, so it stays out of the
-        // denominator until it gains logic worth covering. Delete this
-        // line then.
+        // Pure wiring: it delegates every decision (port validation) to the
+        // tested parsePort helper and only calls serve() with the result. A
+        // test here would just re-assert that delegation, not prove new
+        // behavior, so it stays out of the denominator until it makes a
+        // decision of its own. Delete this line then.
         "src/index.ts",
       ],
       thresholds: {
