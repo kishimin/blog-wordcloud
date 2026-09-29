@@ -1,0 +1,11 @@
+# environment
+.env
+
+# output
+output
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage*
