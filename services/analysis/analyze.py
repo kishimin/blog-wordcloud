@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from sudachipy import tokenizer
 from sudachipy import dictionary
 from wordcloud import WordCloud
@@ -10,6 +12,8 @@ from config import TEXT
 WORD_CLOUD_WIDTH = 1280
 WORD_CLOUD_HEIGHT = 720
 OUTPUT_TOKEN_RANDOM_BYTES = 32
+ANALYSIS_DIRECTORY = Path(__file__).resolve().parent
+OUTPUT_DIRECTORY = ANALYSIS_DIRECTORY / "output"
 
 morphological_tokenizer = dictionary.Dictionary().create()
 
@@ -35,7 +39,7 @@ for morpheme in morphological_tokenizer.tokenize(TEXT, split_mode):
 
 wordcloud_text = " ".join(wordcloud_terms)
 
-font_path = "ipaexg.ttf"
+font_path = str(ANALYSIS_DIRECTORY / "ipaexg.ttf")
 word_cloud = WordCloud(
     width=WORD_CLOUD_WIDTH,
     height=WORD_CLOUD_HEIGHT,
@@ -43,5 +47,6 @@ word_cloud = WordCloud(
     font_path=font_path,
 )
 word_cloud.generate(wordcloud_text)
+OUTPUT_DIRECTORY.mkdir(exist_ok=True)
 output_file_token = secrets.token_urlsafe(OUTPUT_TOKEN_RANDOM_BYTES)
-word_cloud.to_file(f"output/{output_file_token}.png")
+word_cloud.to_file(str(OUTPUT_DIRECTORY / f"{output_file_token}.png"))
