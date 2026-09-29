@@ -6,6 +6,7 @@ from types import ModuleType, SimpleNamespace
 
 
 ANALYZE_SCRIPT = Path(__file__).with_name("analyze.py")
+CONFIG_SCRIPT = Path(__file__).with_name("config.py")
 
 
 class FakeMorpheme:
@@ -91,6 +92,26 @@ def test_analyze_creates_wordcloud_from_selected_morpheme_forms(monkeypatch):
         "width": 1280,
         "height": 720,
         "background_color": "white",
-        "font_path": "ipaexg.ttf",
+        "font_path": str(ANALYZE_SCRIPT.with_name("ipaexg.ttf")),
     }
-    assert word_cloud.saved_path == "output/fixed-output-token.png"
+    assert word_cloud.saved_path == str(
+        ANALYZE_SCRIPT.with_name("output") / "fixed-output-token.png"
+    )
+
+
+def test_config_loads_environment_file_from_its_directory(monkeypatch):
+    dotenv_paths = []
+
+    def fake_load_dotenv(dotenv_path=None):
+        dotenv_paths.append(dotenv_path)
+        monkeypatch.setenv("TEXT", "configured text")
+
+    dotenv_module = ModuleType("dotenv")
+    dotenv_module.load_dotenv = fake_load_dotenv
+    monkeypatch.setitem(sys.modules, "dotenv", dotenv_module)
+    monkeypatch.delenv("TEXT", raising=False)
+
+    config_namespace = runpy.run_path(str(CONFIG_SCRIPT))
+
+    assert config_namespace["TEXT"] == "configured text"
+    assert dotenv_paths == [CONFIG_SCRIPT.with_name(".env")]
