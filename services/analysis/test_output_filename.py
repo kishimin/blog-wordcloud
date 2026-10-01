@@ -46,7 +46,7 @@ def test_png_filename_contains_local_datetime_and_unique_token(monkeypatch):
     sudachi_module = ModuleType("sudachipy")
     sudachi_module.dictionary = SimpleNamespace(
         Dictionary=lambda: SimpleNamespace(
-            create=lambda: SimpleNamespace(tokenize=lambda **kwargs: [])
+            create=lambda: SimpleNamespace(tokenize=lambda *args, **kwargs: [])
         )
     )
     sudachi_module.tokenizer = SimpleNamespace(
@@ -57,6 +57,7 @@ def test_png_filename_contains_local_datetime_and_unique_token(monkeypatch):
     requests_module = ModuleType("requests")
     requests_module.get = fake_get
     config_module = ModuleType("config")
+    config_module.TEXT = "本文"
     config_module.SLOPE_COLLECTOR_URL = "http://collector.test"
     markdown_output_module = ModuleType("markdown_output")
     markdown_output_module.write_analysis_markdown = lambda *args: None
@@ -72,5 +73,8 @@ def test_png_filename_contains_local_datetime_and_unique_token(monkeypatch):
     runpy.run_path(str(ANALYZE_SCRIPT))
 
     assert saved_paths == [
-        str(ANALYZE_SCRIPT.with_name("output") / "20261001_203112_fixed-output-token.png")
+        str(
+            ANALYZE_SCRIPT.with_name("output")
+            / "20261001_203112_fixed-output-token.png"
+        )
     ]

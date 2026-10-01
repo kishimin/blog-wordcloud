@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import datetime
 
 from sudachipy import tokenizer
 from sudachipy import dictionary
@@ -49,4 +50,7 @@ word_cloud = WordCloud(
 word_cloud.generate(wordcloud_text)
 OUTPUT_DIRECTORY.mkdir(exist_ok=True)
 output_file_token = secrets.token_urlsafe(OUTPUT_TOKEN_RANDOM_BYTES)
-word_cloud.to_file(str(OUTPUT_DIRECTORY / f"{output_file_token}.png"))
+output_timestamp = datetime.now().astimezone().strftime("%Y%m%d_%H%M%S")
+word_cloud.to_file(
+    str(OUTPUT_DIRECTORY / f"{output_timestamp}_{output_file_token}.png")
+)
