@@ -3,6 +3,6 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv(Path(__file__).resolve().with_name(".env"))
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 SLOPE_COLLECTOR_URL = os.environ["SLOPE_COLLECTOR_URL"]

@@ -6,7 +6,7 @@ from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
 
-ANALYZE_SCRIPT = Path(__file__).with_name("analyze.py")
+ANALYZE_SCRIPT = Path(__file__).resolve().parents[1] / "analyze.py"
 
 
 def test_png_filename_contains_local_datetime_and_unique_token(monkeypatch):
@@ -56,7 +56,7 @@ def test_png_filename_contains_local_datetime_and_unique_token(monkeypatch):
     wordcloud_module.WordCloud = FakeWordCloud
     requests_module = ModuleType("requests")
     requests_module.get = fake_get
-    config_module = ModuleType("config")
+    config_module = ModuleType("analysis.config")
     config_module.TEXT = "本文"
     config_module.SLOPE_COLLECTOR_URL = "http://collector.test"
 
@@ -65,13 +65,10 @@ def test_png_filename_contains_local_datetime_and_unique_token(monkeypatch):
     monkeypatch.setitem(sys.modules, "sudachipy", sudachi_module)
     monkeypatch.setitem(sys.modules, "wordcloud", wordcloud_module)
     monkeypatch.setitem(sys.modules, "requests", requests_module)
-    monkeypatch.setitem(sys.modules, "config", config_module)
+    monkeypatch.setitem(sys.modules, "analysis.config", config_module)
 
     runpy.run_path(str(ANALYZE_SCRIPT))
 
     assert saved_paths == [
-        str(
-            ANALYZE_SCRIPT.with_name("output")
-            / "20261001_203112_fixed-output-token.png"
-        )
+        str(ANALYZE_SCRIPT.parent / "output" / "20261001_203112_fixed-output-token.png")
     ]

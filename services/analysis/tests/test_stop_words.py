@@ -8,7 +8,7 @@ from sudachipy import dictionary
 from wordcloud import WordCloud
 
 
-ANALYZE_SCRIPT = Path(__file__).with_name("analyze.py")
+ANALYZE_SCRIPT = Path(__file__).resolve().parents[1] / "analyze.py"
 
 
 def test_analysis_excludes_halfwidth_semivoiced_mark_from_wordcloud(monkeypatch):
@@ -44,9 +44,9 @@ def test_analysis_excludes_halfwidth_semivoiced_mark_from_wordcloud(monkeypatch)
             return FakeResponse({"entities": []})
         return FakeResponse({"records": [{"body": "本文", "title": ""}]})
 
-    config_module = ModuleType("config")
+    config_module = ModuleType("analysis.config")
     config_module.SLOPE_COLLECTOR_URL = "http://collector.test"
-    monkeypatch.setitem(sys.modules, "config", config_module)
+    monkeypatch.setitem(sys.modules, "analysis.config", config_module)
     monkeypatch.setattr(requests, "get", fake_get)
     monkeypatch.setattr(dictionary, "Dictionary", FakeDictionary)
     monkeypatch.setattr(WordCloud, "to_file", lambda self, path: None)

@@ -24,7 +24,7 @@ package = false
 line-length = 88
 
 [tool.pytest.ini_options]
-testpaths = ["."]
+testpaths = ["tests"]
 
 [tool.coverage.run]
 source = ["."]

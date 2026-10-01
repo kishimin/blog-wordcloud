@@ -9,8 +9,8 @@ import secrets
 import requests
 import re
 
-from config import SLOPE_COLLECTOR_URL
-from text_chunks import split_text_by_utf8_bytes
+from analysis.config import SLOPE_COLLECTOR_URL
+from analysis.text_chunks import split_text_by_utf8_bytes
 
 
 def remove_html_tag(text: str):
@@ -36,9 +36,9 @@ STOP_WORDS = [
     "事",
     "com",
 ]
-ANALYSIS_DIRECTORY = Path(__file__).resolve().parent
-OUTPUT_DIRECTORY = ANALYSIS_DIRECTORY / "output"
-WORD_CLOUD_FONT_PATH = str(ANALYSIS_DIRECTORY / "ipaexg.ttf")
+SERVICE_DIRECTORY = Path(__file__).resolve().parent
+OUTPUT_DIRECTORY = SERVICE_DIRECTORY / "output"
+WORD_CLOUD_FONT_PATH = str(SERVICE_DIRECTORY / "analysis" / "assets" / "ipaexg.ttf")
 
 
 WORD_CLOUD_WIDTH = 1280

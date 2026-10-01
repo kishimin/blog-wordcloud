@@ -1,6 +1,6 @@
 import pytest
 
-from text_chunks import split_text_by_utf8_bytes
+from analysis.text_chunks import split_text_by_utf8_bytes
 
 
 def test_split_text_by_utf8_bytes_preserves_text_and_respects_byte_limit():

@@ -5,8 +5,8 @@ from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
 
-ANALYZE_SCRIPT = Path(__file__).with_name("analyze.py")
-CONFIG_SCRIPT = Path(__file__).with_name("config.py")
+ANALYZE_SCRIPT = Path(__file__).resolve().parents[1] / "analyze.py"
+CONFIG_SCRIPT = Path(__file__).resolve().parents[1] / "analysis" / "config.py"
 
 
 class FakeMorpheme:
@@ -70,7 +70,7 @@ def test_analyze_creates_wordcloud_from_surface_forms(monkeypatch):
     wordcloud_module = ModuleType("wordcloud")
     wordcloud_module.WordCloud = FakeWordCloud
 
-    config_module = ModuleType("config")
+    config_module = ModuleType("analysis.config")
     config_module.SLOPE_COLLECTOR_URL = "http://collector.test"
 
     analysis_text = "あ" * 20_000
@@ -97,7 +97,7 @@ def test_analyze_creates_wordcloud_from_surface_forms(monkeypatch):
 
     monkeypatch.setitem(sys.modules, "sudachipy", sudachi_module)
     monkeypatch.setitem(sys.modules, "wordcloud", wordcloud_module)
-    monkeypatch.setitem(sys.modules, "config", config_module)
+    monkeypatch.setitem(sys.modules, "analysis.config", config_module)
     monkeypatch.setitem(sys.modules, "requests", requests_module)
     monkeypatch.setattr(secrets, "token_urlsafe", lambda _: "fixed-output-token")
 
@@ -124,7 +124,7 @@ def test_analyze_creates_wordcloud_from_surface_forms(monkeypatch):
         "width": 1280,
         "height": 720,
         "background_color": "white",
-        "font_path": str(ANALYZE_SCRIPT.with_name("ipaexg.ttf")),
+        "font_path": str(ANALYZE_SCRIPT.parent / "analysis" / "assets" / "ipaexg.ttf"),
         "max_words": 100,
         "stopwords": [
             "し",
@@ -147,7 +147,7 @@ def test_analyze_creates_wordcloud_from_surface_forms(monkeypatch):
         "colormap": "cool",
         "collocations": False,
     }
-    assert Path(word_cloud.saved_path).parent == ANALYZE_SCRIPT.with_name("output")
+    assert Path(word_cloud.saved_path).parent == ANALYZE_SCRIPT.parent / "output"
     assert Path(word_cloud.saved_path).name.endswith("_fixed-output-token.png")
 
 
@@ -166,4 +166,4 @@ def test_config_loads_collector_url_from_its_directory(monkeypatch):
     config_namespace = runpy.run_path(str(CONFIG_SCRIPT))
 
     assert config_namespace["SLOPE_COLLECTOR_URL"] == "http://collector.test"
-    assert dotenv_paths == [CONFIG_SCRIPT.with_name(".env")]
+    assert dotenv_paths == [CONFIG_SCRIPT.parents[1] / ".env"]
