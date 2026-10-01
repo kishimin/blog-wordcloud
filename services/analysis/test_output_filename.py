@@ -59,8 +59,6 @@ def test_png_filename_contains_local_datetime_and_unique_token(monkeypatch):
     config_module = ModuleType("config")
     config_module.TEXT = "本文"
     config_module.SLOPE_COLLECTOR_URL = "http://collector.test"
-    markdown_output_module = ModuleType("markdown_output")
-    markdown_output_module.write_analysis_markdown = lambda *args: None
 
     monkeypatch.setattr(datetime, "datetime", FixedDateTime)
     monkeypatch.setattr(secrets, "token_urlsafe", lambda _: "fixed-output-token")
@@ -68,7 +66,6 @@ def test_png_filename_contains_local_datetime_and_unique_token(monkeypatch):
     monkeypatch.setitem(sys.modules, "wordcloud", wordcloud_module)
     monkeypatch.setitem(sys.modules, "requests", requests_module)
     monkeypatch.setitem(sys.modules, "config", config_module)
-    monkeypatch.setitem(sys.modules, "markdown_output", markdown_output_module)
 
     runpy.run_path(str(ANALYZE_SCRIPT))
 

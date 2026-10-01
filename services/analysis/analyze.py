@@ -10,7 +10,6 @@ import requests
 import re
 
 from config import SLOPE_COLLECTOR_URL
-from markdown_output import write_analysis_markdown
 from text_chunks import split_text_by_utf8_bytes
 
 
@@ -126,8 +125,6 @@ word_cloud = WordCloud(
     collocations=False,
 )
 word_cloud.generate(wordcloud_text)
-
-write_analysis_markdown(analysis_text, wordcloud_text, OUTPUT_DIRECTORY)
 
 OUTPUT_DIRECTORY.mkdir(exist_ok=True)
 output_file_token = secrets.token_urlsafe(OUTPUT_TOKEN_RANDOM_BYTES)

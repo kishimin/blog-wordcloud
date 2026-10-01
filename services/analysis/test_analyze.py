@@ -95,19 +95,10 @@ def test_analyze_creates_wordcloud_from_surface_forms(monkeypatch):
     requests_module = ModuleType("requests")
     requests_module.get = fake_get
 
-    markdown_outputs = []
-    markdown_output_module = ModuleType("markdown_output")
-    markdown_output_module.write_analysis_markdown = (
-        lambda text, wordcloud_text, output_directory: markdown_outputs.append(
-            (text, wordcloud_text, output_directory)
-        )
-    )
-
     monkeypatch.setitem(sys.modules, "sudachipy", sudachi_module)
     monkeypatch.setitem(sys.modules, "wordcloud", wordcloud_module)
     monkeypatch.setitem(sys.modules, "config", config_module)
     monkeypatch.setitem(sys.modules, "requests", requests_module)
-    monkeypatch.setitem(sys.modules, "markdown_output", markdown_output_module)
     monkeypatch.setattr(secrets, "token_urlsafe", lambda _: "fixed-output-token")
 
     runpy.run_path(str(ANALYZE_SCRIPT))
@@ -129,7 +120,6 @@ def test_analyze_creates_wordcloud_from_surface_forms(monkeypatch):
     assert word_cloud.generated_text == " ".join(
         [selected_terms] * len(tokenizer_instance.received_texts)
     )
-    assert markdown_outputs == []
     assert word_cloud.options == {
         "width": 1280,
         "height": 720,
