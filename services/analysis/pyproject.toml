@@ -6,6 +6,7 @@ dependencies = [
     "SudachiDict-core==20260723.1",
     "SudachiPy==0.7.0",
     "python-dotenv==0.21.0",
+    "requests==2.34.2",
     "wordcloud==1.9.6",
 ]
 
