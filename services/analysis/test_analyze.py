@@ -10,10 +10,9 @@ CONFIG_SCRIPT = Path(__file__).with_name("config.py")
 
 
 class FakeMorpheme:
-    def __init__(self, parts_of_speech, surface, normalized):
+    def __init__(self, parts_of_speech, surface):
         self._parts_of_speech = parts_of_speech
         self._surface = surface
-        self._normalized = normalized
 
     def part_of_speech(self):
         return self._parts_of_speech
@@ -21,19 +20,16 @@ class FakeMorpheme:
     def surface(self):
         return self._surface
 
-    def normalized_form(self):
-        return self._normalized
 
-
-def test_analyze_creates_wordcloud_from_selected_morpheme_forms(monkeypatch):
+def test_analyze_creates_wordcloud_from_surface_forms(monkeypatch):
     split_mode_c = object()
     morphemes = [
-        FakeMorpheme(("名詞", "普通名詞"), "表層名詞", "正規名詞"),
-        FakeMorpheme(("動詞", "一般"), "表層動詞", "正規動詞"),
-        FakeMorpheme(("形容詞", "一般"), "表層形容詞", "正規形容詞"),
-        FakeMorpheme(("形状詞", "一般"), "表層形状詞", "正規形状詞"),
-        FakeMorpheme(("副詞", "一般"), "表層副詞", "正規副詞"),
-        FakeMorpheme(("感動詞", "一般"), "表層感動詞", "正規感動詞"),
+        FakeMorpheme(("名詞", "普通名詞"), "表層名詞"),
+        FakeMorpheme(("動詞", "一般"), "表層動詞"),
+        FakeMorpheme(("形容詞", "一般"), "表層形容詞"),
+        FakeMorpheme(("形状詞", "一般"), "表層形状詞"),
+        FakeMorpheme(("副詞", "一般"), "表層副詞"),
+        FakeMorpheme(("感動詞", "一般"), "表層感動詞"),
     ]
 
     class FakeTokenizer:
@@ -129,7 +125,7 @@ def test_analyze_creates_wordcloud_from_selected_morpheme_forms(monkeypatch):
     )
     assert tokenizer_instance.received_split_mode is split_mode_c
     word_cloud = word_cloud_instances[0]
-    selected_terms = "表層名詞 正規動詞 正規形容詞 表層形状詞 表層副詞 表層感動詞"
+    selected_terms = "表層名詞 表層動詞 表層形容詞 表層形状詞 表層副詞 表層感動詞"
     assert word_cloud.generated_text == " ".join(
         [selected_terms] * len(tokenizer_instance.received_texts)
     )
