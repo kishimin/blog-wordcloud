@@ -37,9 +37,11 @@ def test_analyze_creates_wordcloud_from_selected_morpheme_forms(monkeypatch):
     ]
 
     class FakeTokenizer:
-        def tokenize(self, text, split_mode):
-            self.received_text = text
-            self.received_split_mode = split_mode
+        received_texts = []
+
+        def tokenize(self, text, mode):
+            self.received_texts.append(text)
+            self.received_split_mode = mode
             return morphemes
 
     tokenizer_instance = FakeTokenizer()
@@ -73,45 +75,115 @@ def test_analyze_creates_wordcloud_from_selected_morpheme_forms(monkeypatch):
     wordcloud_module.WordCloud = FakeWordCloud
 
     config_module = ModuleType("config")
-    config_module.TEXT = "入力テキスト"
+    config_module.SLOPE_COLLECTOR_URL = "http://collector.test"
+
+    analysis_text = "あ" * 20_000
+
+    class FakeResponse:
+        def __init__(self, payload):
+            self.payload = payload
+
+        def json(self):
+            return self.payload
+
+    requested_urls = []
+
+    def fake_get(url):
+        requested_urls.append(url)
+        if url.endswith("/sources"):
+            return FakeResponse({"sources": []})
+        if url.endswith("/entities/all"):
+            return FakeResponse({"entities": []})
+        return FakeResponse({"records": [{"body": analysis_text, "title": ""}]})
+
+    requests_module = ModuleType("requests")
+    requests_module.get = fake_get
+
+    markdown_outputs = []
+    markdown_output_module = ModuleType("markdown_output")
+    markdown_output_module.write_analysis_markdown = (
+        lambda text, wordcloud_text, output_directory: markdown_outputs.append(
+            (text, wordcloud_text, output_directory)
+        )
+    )
 
     monkeypatch.setitem(sys.modules, "sudachipy", sudachi_module)
     monkeypatch.setitem(sys.modules, "wordcloud", wordcloud_module)
     monkeypatch.setitem(sys.modules, "config", config_module)
+    monkeypatch.setitem(sys.modules, "requests", requests_module)
+    monkeypatch.setitem(sys.modules, "markdown_output", markdown_output_module)
     monkeypatch.setattr(secrets, "token_urlsafe", lambda _: "fixed-output-token")
 
     runpy.run_path(str(ANALYZE_SCRIPT))
 
-    assert tokenizer_instance.received_text == "入力テキスト"
+    assert requested_urls == [
+        "http://collector.test/sources",
+        "http://collector.test/entities/all",
+        "http://collector.test/entities/10/records",
+    ]
+    assert len(tokenizer_instance.received_texts) > 1
+    assert "".join(tokenizer_instance.received_texts) == analysis_text
+    assert all(
+        len(chunk.encode("utf-8")) <= 49_149
+        for chunk in tokenizer_instance.received_texts
+    )
     assert tokenizer_instance.received_split_mode is split_mode_c
     word_cloud = word_cloud_instances[0]
-    assert word_cloud.generated_text == (
-        "表層名詞 正規動詞 正規形容詞 表層形状詞 表層副詞 表層感動詞"
+    selected_terms = "表層名詞 正規動詞 正規形容詞 表層形状詞 表層副詞 表層感動詞"
+    assert word_cloud.generated_text == " ".join(
+        [selected_terms] * len(tokenizer_instance.received_texts)
     )
+    assert markdown_outputs == [
+        (
+            analysis_text,
+            word_cloud.generated_text,
+            ANALYZE_SCRIPT.with_name("output"),
+        )
+    ]
     assert word_cloud.options == {
         "width": 1280,
         "height": 720,
         "background_color": "white",
         "font_path": str(ANALYZE_SCRIPT.with_name("ipaexg.ttf")),
+        "max_words": 100,
+        "stopwords": [
+            "し",
+            "する",
+            "なる",
+            "こと",
+            "ﾟ",
+            "いる",
+            "ござい",
+            "https",
+            "よう",
+            "なっ",
+            "おり",
+            "方",
+            "日",
+            "amp",
+            "事",
+            "com",
+        ],
+        "colormap": "cool",
+        "collocations": False,
     }
-    assert word_cloud.saved_path == str(
-        ANALYZE_SCRIPT.with_name("output") / "fixed-output-token.png"
-    )
+    assert Path(word_cloud.saved_path).parent == ANALYZE_SCRIPT.with_name("output")
+    assert Path(word_cloud.saved_path).name.endswith("_fixed-output-token.png")
 
 
-def test_config_loads_environment_file_from_its_directory(monkeypatch):
+def test_config_loads_collector_url_from_its_directory(monkeypatch):
     dotenv_paths = []
 
     def fake_load_dotenv(dotenv_path=None):
         dotenv_paths.append(dotenv_path)
-        monkeypatch.setenv("TEXT", "configured text")
+        monkeypatch.setenv("SLOPE_COLLECTOR_URL", "http://collector.test")
 
     dotenv_module = ModuleType("dotenv")
     dotenv_module.load_dotenv = fake_load_dotenv
     monkeypatch.setitem(sys.modules, "dotenv", dotenv_module)
-    monkeypatch.delenv("TEXT", raising=False)
+    monkeypatch.delenv("SLOPE_COLLECTOR_URL", raising=False)
 
     config_namespace = runpy.run_path(str(CONFIG_SCRIPT))
 
-    assert config_namespace["TEXT"] == "configured text"
+    assert config_namespace["SLOPE_COLLECTOR_URL"] == "http://collector.test"
     assert dotenv_paths == [CONFIG_SCRIPT.with_name(".env")]
