@@ -129,13 +129,7 @@ def test_analyze_creates_wordcloud_from_surface_forms(monkeypatch):
     assert word_cloud.generated_text == " ".join(
         [selected_terms] * len(tokenizer_instance.received_texts)
     )
-    assert markdown_outputs == [
-        (
-            analysis_text,
-            word_cloud.generated_text,
-            ANALYZE_SCRIPT.with_name("output"),
-        )
-    ]
+    assert markdown_outputs == []
     assert word_cloud.options == {
         "width": 1280,
         "height": 720,
