@@ -106,25 +106,14 @@ morphological_tokenizer = dictionary.Dictionary().create()
 
 split_mode = tokenizer.Tokenizer.SplitMode.C
 
-part_of_speech_rules = {
-    "名詞": False,
-    "動詞": True,
-    "形容詞": True,
-    "形状詞": False,
-    "副詞": False,
-    "感動詞": False,
-}
-
 wordcloud_terms = []
 for text_chunk in split_text_by_utf8_bytes(text):
     for morpheme in morphological_tokenizer.tokenize(text=text_chunk, mode=split_mode):
-        for part_of_speech_name, use_normalized_form in part_of_speech_rules.items():
-            if part_of_speech_name in morpheme.part_of_speech():
-                wordcloud_terms.append(
-                    morpheme.normalized_form()
-                    if use_normalized_form
-                    else morpheme.surface()
-                )
+        part_of_speech = morpheme.part_of_speech()[0]
+        if part_of_speech in ("動詞", "形容詞"):
+            wordcloud_terms.append(morpheme.normalized_form())
+        elif part_of_speech in ("名詞", "形状詞", "副詞", "感動詞"):
+            wordcloud_terms.append(morpheme.surface())
 
 # A single hiragana character carries little meaning in the word cloud.
 kana_re = re.compile("^[\u3040-\u309F]$")
