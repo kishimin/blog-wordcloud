@@ -110,9 +110,7 @@ wordcloud_terms = []
 for text_chunk in split_text_by_utf8_bytes(text):
     for morpheme in morphological_tokenizer.tokenize(text=text_chunk, mode=split_mode):
         part_of_speech = morpheme.part_of_speech()[0]
-        if part_of_speech in ("動詞", "形容詞"):
-            wordcloud_terms.append(morpheme.normalized_form())
-        elif part_of_speech in ("名詞", "形状詞", "副詞", "感動詞"):
+        if part_of_speech in ("名詞", "動詞", "形容詞", "形状詞", "副詞", "感動詞"):
             wordcloud_terms.append(morpheme.surface())
 
 # A single hiragana character carries little meaning in the word cloud.
