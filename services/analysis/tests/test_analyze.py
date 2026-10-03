@@ -43,7 +43,7 @@ def test_analyze_creates_wordcloud_from_surface_forms(monkeypatch):
     tokenizer_instance = FakeTokenizer()
 
     class FakeDictionary:
-        def create(self):
+        def tokenizer(self):
             return tokenizer_instance
 
     sudachi_module = ModuleType("sudachipy")
@@ -72,6 +72,9 @@ def test_analyze_creates_wordcloud_from_surface_forms(monkeypatch):
 
     config_module = ModuleType("analysis.config")
     config_module.SLOPE_COLLECTOR_URL = "http://collector.test"
+    config_module.O_MEET_PROTECTION_WORD = "keep-me"
+    config_module.R_MEET_PROTECTION_WORD = ""
+    config_module.MEET_PROTECTION_WORD = ""
 
     analysis_text = "あ" * 20_000
 
@@ -90,7 +93,16 @@ def test_analyze_creates_wordcloud_from_surface_forms(monkeypatch):
             return FakeResponse({"sources": []})
         if url.endswith("/entities/all"):
             return FakeResponse({"entities": []})
-        return FakeResponse({"records": [{"body": analysis_text, "title": ""}]})
+        return FakeResponse(
+            {
+                "records": [
+                    {
+                        "body": analysis_text + "keep-me https://example.com/path",
+                        "title": "",
+                    }
+                ]
+            }
+        )
 
     requests_module = ModuleType("requests")
     requests_module.get = fake_get
@@ -106,10 +118,10 @@ def test_analyze_creates_wordcloud_from_surface_forms(monkeypatch):
     assert requested_urls == [
         "http://collector.test/sources",
         "http://collector.test/entities/all",
-        "http://collector.test/entities/10/records",
+        "http://collector.test/entities/8/records",
     ]
     assert len(tokenizer_instance.received_texts) > 1
-    assert "".join(tokenizer_instance.received_texts) == analysis_text
+    assert "".join(tokenizer_instance.received_texts) == analysis_text + " "
     assert all(
         len(chunk.encode("utf-8")) <= 49_149
         for chunk in tokenizer_instance.received_texts
@@ -118,7 +130,7 @@ def test_analyze_creates_wordcloud_from_surface_forms(monkeypatch):
     word_cloud = word_cloud_instances[0]
     selected_terms = "表層名詞 表層動詞 表層形容詞 表層形状詞 表層副詞 表層感動詞"
     assert word_cloud.generated_text == " ".join(
-        [selected_terms] * len(tokenizer_instance.received_texts)
+        [selected_terms] * len(tokenizer_instance.received_texts) + ["keep-me"]
     )
     assert word_cloud.options == {
         "width": 1280,
@@ -127,22 +139,17 @@ def test_analyze_creates_wordcloud_from_surface_forms(monkeypatch):
         "font_path": str(ANALYZE_SCRIPT.parent / "analysis" / "assets" / "ipaexg.ttf"),
         "max_words": 100,
         "stopwords": [
-            "し",
             "する",
             "なる",
             "こと",
             "ﾟ",
             "いる",
             "ござい",
-            "https",
             "よう",
             "なっ",
             "おり",
             "方",
-            "日",
-            "amp",
             "事",
-            "com",
         ],
         "colormap": "cool",
         "collocations": False,
@@ -157,6 +164,9 @@ def test_config_loads_collector_url_from_its_directory(monkeypatch):
     def fake_load_dotenv(dotenv_path=None):
         dotenv_paths.append(dotenv_path)
         monkeypatch.setenv("SLOPE_COLLECTOR_URL", "http://collector.test")
+        monkeypatch.setenv("O_MEET_PROTECTION_WORD", "sample-one")
+        monkeypatch.setenv("R_MEET_PROTECTION_WORD", "sample-two")
+        monkeypatch.setenv("MEET_PROTECTION_WORD", "sample-three")
 
     dotenv_module = ModuleType("dotenv")
     dotenv_module.load_dotenv = fake_load_dotenv
@@ -166,4 +176,7 @@ def test_config_loads_collector_url_from_its_directory(monkeypatch):
     config_namespace = runpy.run_path(str(CONFIG_SCRIPT))
 
     assert config_namespace["SLOPE_COLLECTOR_URL"] == "http://collector.test"
+    assert config_namespace["O_MEET_PROTECTION_WORD"] == "sample-one"
+    assert config_namespace["R_MEET_PROTECTION_WORD"] == "sample-two"
+    assert config_namespace["MEET_PROTECTION_WORD"] == "sample-three"
     assert dotenv_paths == [CONFIG_SCRIPT.parents[1] / ".env"]

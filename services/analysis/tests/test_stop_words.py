@@ -27,7 +27,7 @@ def test_analysis_excludes_halfwidth_semivoiced_mark_from_wordcloud(monkeypatch)
             return [FakeMorpheme("ﾟ"), FakeMorpheme("有効語")]
 
     class FakeDictionary:
-        def create(self):
+        def tokenizer(self):
             return FakeTokenizer()
 
     class FakeResponse:
@@ -46,6 +46,9 @@ def test_analysis_excludes_halfwidth_semivoiced_mark_from_wordcloud(monkeypatch)
 
     config_module = ModuleType("analysis.config")
     config_module.SLOPE_COLLECTOR_URL = "http://collector.test"
+    config_module.O_MEET_PROTECTION_WORD = ""
+    config_module.R_MEET_PROTECTION_WORD = ""
+    config_module.MEET_PROTECTION_WORD = ""
     monkeypatch.setitem(sys.modules, "analysis.config", config_module)
     monkeypatch.setattr(requests, "get", fake_get)
     monkeypatch.setattr(dictionary, "Dictionary", FakeDictionary)

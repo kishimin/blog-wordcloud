@@ -46,7 +46,7 @@ def test_png_filename_contains_local_datetime_and_unique_token(monkeypatch):
     sudachi_module = ModuleType("sudachipy")
     sudachi_module.dictionary = SimpleNamespace(
         Dictionary=lambda: SimpleNamespace(
-            create=lambda: SimpleNamespace(tokenize=lambda *args, **kwargs: [])
+            tokenizer=lambda: SimpleNamespace(tokenize=lambda *args, **kwargs: [])
         )
     )
     sudachi_module.tokenizer = SimpleNamespace(
@@ -59,6 +59,9 @@ def test_png_filename_contains_local_datetime_and_unique_token(monkeypatch):
     config_module = ModuleType("analysis.config")
     config_module.TEXT = "本文"
     config_module.SLOPE_COLLECTOR_URL = "http://collector.test"
+    config_module.O_MEET_PROTECTION_WORD = ""
+    config_module.R_MEET_PROTECTION_WORD = ""
+    config_module.MEET_PROTECTION_WORD = ""
 
     monkeypatch.setattr(datetime, "datetime", FixedDateTime)
     monkeypatch.setattr(secrets, "token_urlsafe", lambda _: "fixed-output-token")
