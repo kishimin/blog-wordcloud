@@ -58,13 +58,13 @@ for sources in sources_response.json().values():
         source_names.append(name_without_digits)
 
 entities_response = requests.get(url=f"{SLOPE_COLLECTOR_URL}/entities/all")
-
 entity_names = []
 for entities in entities_response.json().values():
     for entity in entities:
         # Posts often omit the spaces in entity names.
         name_without_spaces = entity["name"].replace(" ", "")
         entity_names.append(name_without_spaces)
+
 
 records_response = requests.get(
     url=f"{SLOPE_COLLECTOR_URL}/entities/{ENTITY_ID}/records"
@@ -82,6 +82,7 @@ for records in records_response.json().values():
 
 # Do not tokenize scraped "&amp;" as "amp"; it represents an ampersand, not a word.
 analysis_text = analysis_text.replace("amp;", "")
+
 
 protected_names = []
 
@@ -132,6 +133,7 @@ wordcloud_terms = [w for w in wordcloud_terms if not kana_re.match(w)]
 
 wordcloud_terms.extend(protected_names)
 
+
 wordcloud_text = " ".join(wordcloud_terms)
 
 word_cloud = WordCloud(
@@ -145,6 +147,7 @@ word_cloud = WordCloud(
     collocations=False,
 )
 word_cloud.generate(wordcloud_text)
+
 
 OUTPUT_DIRECTORY.mkdir(exist_ok=True)
 output_file_token = secrets.token_urlsafe(OUTPUT_TOKEN_RANDOM_BYTES)
