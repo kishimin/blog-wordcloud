@@ -15,11 +15,8 @@ from analysis.config import (
     R_MEET_PROTECTION_WORD,
     MEET_PROTECTION_WORD,
 )
-from analysis.text_chunks import split_text_by_utf8_bytes
-
-
-def remove_html_tag(text: str):
-    return re.sub(re.compile("<.*?>"), "", text)
+from analysis.utils.html import remove_html_tag
+from analysis.utils.text_chunks import split_text_by_utf8_bytes
 
 
 ENTITY_ID = 8
