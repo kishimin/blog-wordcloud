@@ -80,6 +80,9 @@ for records in records_response.json().values():
         title = record["title"]
         analysis_text += body + title
 
+# Do not tokenize scraped "&amp;" as "amp"; it represents an ampersand, not a word.
+analysis_text = analysis_text.replace("amp;", "")
+
 protected_names = []
 
 for name in source_names:
@@ -94,6 +97,11 @@ for name in entity_names:
     protected_names.extend(re.findall(re.escape(name), analysis_text))
     analysis_text = analysis_text.replace(name, "")
 
+# Do not keep URLs: tokenization splits them into unrelated word cloud terms.
+url_re = re.compile(
+    r"https?:\/\/(?:www\.)?[a-zA-Z0-9:?#/@\-._~%!$&'()*+,;=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[a-zA-Z0-9:?#/@\-._~%!$&'()*+,;=]*)"
+)
+analysis_text = re.sub(url_re, "", analysis_text)
 
 morphological_tokenizer = dictionary.Dictionary().create()
 
