@@ -90,16 +90,18 @@ def test_analyze_creates_wordcloud_from_surface_forms(monkeypatch):
     def fake_get(url):
         requested_urls.append(url)
         if url.endswith("/sources"):
-            return FakeResponse({"sources": []})
+            return FakeResponse({"sources": [{"name": "Group46Unit7"}]})
         if url.endswith("/entities/all"):
             return FakeResponse({"entities": []})
         return FakeResponse(
             {
                 "records": [
                     {
-                        "body": analysis_text + "keep-me https://example.com/path",
-                        "title": "",
-                    }
+                        "body": analysis_text
+                        + "Group46Unit keep-me https://example.com/path",
+                        "title": "見出し",
+                    },
+                    {"body": "次本文", "title": "次見出し"},
                 ]
             }
         )
@@ -121,7 +123,12 @@ def test_analyze_creates_wordcloud_from_surface_forms(monkeypatch):
         "http://collector.test/entities/8/records",
     ]
     assert len(tokenizer_instance.received_texts) > 1
-    assert "".join(tokenizer_instance.received_texts) == analysis_text + " "
+    assert "".join(tokenizer_instance.received_texts).split() == [
+        analysis_text,
+        "見出し",
+        "次本文",
+        "次見出し",
+    ]
     assert all(
         len(chunk.encode("utf-8")) <= 49_149
         for chunk in tokenizer_instance.received_texts
@@ -130,7 +137,8 @@ def test_analyze_creates_wordcloud_from_surface_forms(monkeypatch):
     word_cloud = word_cloud_instances[0]
     selected_terms = "表層名詞 表層動詞 表層形容詞 表層形状詞 表層副詞 表層感動詞"
     assert word_cloud.generated_text == " ".join(
-        [selected_terms] * len(tokenizer_instance.received_texts) + ["keep-me"]
+        [selected_terms] * len(tokenizer_instance.received_texts)
+        + ["Group46Unit", "keep-me"]
     )
     assert word_cloud.options == {
         "width": 1280,

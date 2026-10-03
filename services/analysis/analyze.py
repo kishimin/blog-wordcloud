@@ -53,7 +53,8 @@ for sources in sources_response.json().values():
         source_name = source["name"]
         source_names.append(source_name)
         # Posts often use the source name without its numeric suffix.
-        name_without_digits = re.sub(r"\d+", r"", source_name)
+        # Do not add the shorter alias first; removal could split its full name.
+        name_without_digits = re.sub(r"\d+$", r"", source_name)
         source_names.append(name_without_digits)
 
 entities_response = requests.get(url=f"{SLOPE_COLLECTOR_URL}/entities/all")
@@ -75,7 +76,8 @@ for records in records_response.json().values():
     for record in records:
         body = remove_html_tag(record["body"])
         title = record["title"]
-        analysis_text += body + title
+        # Do not join bodies, titles, or records directly; Sudachi could merge words.
+        analysis_text += body + " " + title + " "
 
 
 # Do not tokenize scraped "&amp;" as "amp"; it represents an ampersand, not a word.
