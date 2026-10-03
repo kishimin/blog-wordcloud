@@ -4,6 +4,10 @@
 # output
 output
 
+# local analysis scratch files
+/services/analysis/input/
+/services/analysis/scripts/
+
 # Python artifacts
 __pycache__/
 *.py[cod]
