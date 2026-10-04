@@ -2,6 +2,9 @@ import asyncio
 import secrets
 from types import SimpleNamespace
 
+import pytest
+from fastapi import HTTPException
+
 import analyze as image_by_entity
 import analyze as image_by_frame_file
 
@@ -129,13 +132,18 @@ def test_entity_image_handler_generates_and_returns_png(monkeypatch, tmp_path):
     assert response.media_type == "image/png"
 
 
-def test_frame_file_handler_uses_uploaded_mask_and_returns_png(monkeypatch, tmp_path):
+@pytest.mark.parametrize("upload_size", [0, 10 * 1024 * 1024])
+def test_frame_file_handler_uses_uploaded_mask_and_returns_png(
+    monkeypatch, tmp_path, upload_size
+):
     requested_urls, responses = prepare_generation(
         monkeypatch, image_by_frame_file, tmp_path
     )
     mask = object()
 
     class FakeUpload:
+        size = upload_size
+
         async def read(self):
             return b"image-bytes"
 
@@ -154,3 +162,21 @@ def test_frame_file_handler_uses_uploaded_mask_and_returns_png(monkeypatch, tmp_
     assert response is responses[0]
     assert response.path == wordcloud.saved_path
     assert response.media_type == "image/png"
+
+
+def test_frame_file_handler_rejects_oversized_upload_before_reading():
+    class OversizedUpload:
+        size = 10 * 1024 * 1024 + 1
+
+        async def read(self):
+            raise AssertionError("Oversized uploads must not be read")
+
+    with pytest.raises(HTTPException) as error:
+        asyncio.run(
+            image_by_frame_file.generate_frame_file_wordcloud(
+                entity_id=19, image_file=OversizedUpload()
+            )
+        )
+
+    assert error.value.status_code == 402
+    assert error.value.detail == "file size limit"

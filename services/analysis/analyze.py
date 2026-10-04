@@ -1,4 +1,4 @@
-from fastapi import APIRouter, responses, File, UploadFile
+from fastapi import APIRouter, responses, File, UploadFile, HTTPException
 from pathlib import Path
 from PIL import Image
 from sudachipy import tokenizer
@@ -178,6 +178,9 @@ async def generate_frame_file_wordcloud(
     Generate a word cloud image using the uploaded frame file as its mask.
     """
     try:
+        if image_file.size > 10 * 1024 * 1024:
+            raise HTTPException(status_code=402, detail="file size limit")
+
         # WordCloud requires its mask as a NumPy array, so decode the uploaded bytes first.
         uploaded_image_bytes = await image_file.read()
         with Image.open(io.BytesIO(uploaded_image_bytes)) as uploaded_image:
