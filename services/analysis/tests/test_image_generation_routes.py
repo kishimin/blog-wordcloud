@@ -141,8 +141,8 @@ def test_frame_file_handler_uses_uploaded_mask_and_returns_png(monkeypatch, tmp_
     monkeypatch.setattr(image_by_frame_file.np, "array", lambda _: mask)
 
     response = asyncio.run(
-        image_by_frame_file.generate_upload_image_wordcloud(
-            entity_id=19, imagefile=FakeUpload()
+        image_by_frame_file.generate_frame_file_wordcloud(
+            entity_id=19, image_file=FakeUpload()
         )
     )
 

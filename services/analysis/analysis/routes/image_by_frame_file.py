@@ -48,20 +48,17 @@ INCLUDED_PARTS_OF_SPEECH = ("名詞", "動詞", "形容詞", "形状詞", "副�
 
 
 @router.post("/frame-file/{entity_id}")
-async def generate_upload_image_wordcloud(
-    entity_id: int, imagefile: UploadFile = File(...)
+async def generate_frame_file_wordcloud(
+    entity_id: int, image_file: UploadFile = File(...)
 ):
     """
-    TODO: entity_idでのアップロードした画像でワードクラウド画像を取得する(in English)
+    Generate a word cloud image using the uploaded frame file as its mask.
     """
     try:
-        # TODO: 読み込んだimagefileがbytesで、maskがnumpyを要求するために変換している(why not comment in English)
-        mask = []
-        image_data = await imagefile.read()
-        num_byteio = io.BytesIO(image_data)
-        with Image.open(num_byteio) as img:
-            num_numpy = np.array(img)
-            mask = num_numpy
+        # WordCloud requires its mask as a NumPy array, so decode the uploaded bytes first.
+        uploaded_image_bytes = await image_file.read()
+        with Image.open(io.BytesIO(uploaded_image_bytes)) as uploaded_image:
+            mask_array = np.array(uploaded_image)
 
         sources_response = requests.get(url=f"{SLOPE_COLLECTOR_URL}/sources")
         source_names = []
@@ -100,55 +97,57 @@ async def generate_upload_image_wordcloud(
 
         protected_names = []
 
-        for name in source_names:
-            if not name:
+        for protected_name in source_names:
+            if not protected_name:
                 continue
-            protected_names.extend(re.findall(re.escape(name), analysis_text))
-            analysis_text = analysis_text.replace(name, "")
+            protected_names.extend(re.findall(re.escape(protected_name), analysis_text))
+            analysis_text = analysis_text.replace(protected_name, "")
 
-        for name in entity_names:
-            if not name:
+        for protected_name in entity_names:
+            if not protected_name:
                 continue
-            protected_names.extend(re.findall(re.escape(name), analysis_text))
-            analysis_text = analysis_text.replace(name, "")
+            protected_names.extend(re.findall(re.escape(protected_name), analysis_text))
+            analysis_text = analysis_text.replace(protected_name, "")
 
         meet_protection_words = [
             O_MEET_PROTECTION_WORD,
             R_MEET_PROTECTION_WORD,
             MEET_PROTECTION_WORD,
         ]
-        for name in meet_protection_words:
-            if not name:
+        for protected_name in meet_protection_words:
+            if not protected_name:
                 continue
-            protected_names.extend(re.findall(re.escape(name), analysis_text))
-            analysis_text = analysis_text.replace(name, "")
+            protected_names.extend(re.findall(re.escape(protected_name), analysis_text))
+            analysis_text = analysis_text.replace(protected_name, "")
 
         # Do not keep URLs: tokenization splits them into unrelated word cloud terms.
-        url_re = re.compile(
+        url_pattern = re.compile(
             r"https?:\/\/(?:www\.)?[a-zA-Z0-9:?#/@\-._~%!$&'()*+,;=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[a-zA-Z0-9:?#/@\-._~%!$&'()*+,;=]*)"
         )
-        analysis_text = re.sub(url_re, "", analysis_text)
+        analysis_text = re.sub(url_pattern, "", analysis_text)
 
         morphological_tokenizer = dictionary.Dictionary().tokenizer()
 
         split_mode = tokenizer.Tokenizer.SplitMode.C
 
-        wordcloud_terms = []
+        word_cloud_terms = []
         for text_chunk in split_text_by_utf8_bytes(analysis_text):
             for morpheme in morphological_tokenizer.tokenize(
                 text=text_chunk, mode=split_mode
             ):
                 part_of_speech = morpheme.part_of_speech()[0]
                 if part_of_speech in INCLUDED_PARTS_OF_SPEECH:
-                    wordcloud_terms.append(morpheme.surface())
+                    word_cloud_terms.append(morpheme.surface())
 
         # A single hiragana character carries little meaning in the word cloud.
-        kana_re = re.compile("^[\u3040-\u309F]$")
-        wordcloud_terms = [w for w in wordcloud_terms if not kana_re.match(w)]
+        single_hiragana_pattern = re.compile("^[\u3040-\u309F]$")
+        word_cloud_terms = [
+            term for term in word_cloud_terms if not single_hiragana_pattern.match(term)
+        ]
 
-        wordcloud_terms.extend(protected_names)
+        word_cloud_terms.extend(protected_names)
 
-        wordcloud_text = " ".join(wordcloud_terms)
+        word_cloud_text = " ".join(word_cloud_terms)
 
         word_cloud = WordCloud(
             background_color=BACKGROUND_COLOR,
@@ -156,17 +155,17 @@ async def generate_upload_image_wordcloud(
             stopwords=STOP_WORDS,
             colormap=COLOR_MAP,
             collocations=False,
-            mask=mask,
+            mask=mask_array,
         )
-        word_cloud.generate(wordcloud_text)
+        word_cloud.generate(word_cloud_text)
 
         OUTPUT_DIRECTORY.mkdir(exist_ok=True)
         output_file_token = secrets.token_urlsafe(OUTPUT_TOKEN_RANDOM_BYTES)
         file_path = str(OUTPUT_DIRECTORY / f"{output_file_token}.png")
         word_cloud.to_file(filename=file_path)
 
-        image = Image.open(file_path)
-        image.save(file_path)
+        with Image.open(file_path) as generated_image:
+            generated_image.save(file_path)
         return responses.FileResponse(path=file_path, media_type="image/png")
 
     except Exception as e:
