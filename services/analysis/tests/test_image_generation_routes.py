@@ -2,7 +2,8 @@ import asyncio
 import secrets
 from types import SimpleNamespace
 
-from analysis.routes import image_by_entity, image_by_frame_file
+import analyze as image_by_entity
+import analyze as image_by_frame_file
 
 
 class FakeMorpheme:
