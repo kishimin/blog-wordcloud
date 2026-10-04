@@ -11,8 +11,6 @@ import re
 import numpy as np
 import io
 
-from analysis.routes.image_by_entity import router as entity_image_router
-
 from analysis.config import (
     SLOPE_COLLECTOR_URL,
     O_MEET_PROTECTION_WORD,
@@ -22,8 +20,7 @@ from analysis.config import (
 from analysis.utils.html import remove_html_tag
 from analysis.utils.text_chunks import split_text_by_utf8_bytes
 
-router = APIRouter()
-frame_file_router = APIRouter(prefix="/images", tags=["images"])
+router = APIRouter(prefix="/images", tags=["images"])
 
 STOP_WORDS = [
     "する",
@@ -38,7 +35,7 @@ STOP_WORDS = [
     "方",
     "事",
 ]
-SERVICE_DIRECTORY = Path(__file__).resolve().parent
+SERVICE_DIRECTORY = Path(__file__).resolve().parents[2]
 INPUT_DIRECTORY = SERVICE_DIRECTORY / "input"
 OUTPUT_DIRECTORY = SERVICE_DIRECTORY / "output"
 WORD_CLOUD_FONT_PATH = str(SERVICE_DIRECTORY / "analysis" / "assets" / "ipaexg.ttf")
@@ -50,21 +47,15 @@ BACKGROUND_COLOR = "white"
 INCLUDED_PARTS_OF_SPEECH = ("名詞", "動詞", "形容詞", "形状詞", "副詞", "感動詞")
 
 
-@frame_file_router.post("/frame-file/{entity_id}")
-async def generate_upload_image_wordcloud(
-    entity_id: int, imagefile: UploadFile | None = File(None)
-):
+@router.get("/{entity_id}")
+def generate_wordcloud(entity_id: int):
     """
-    TODO: entity_idでのアップロードした画像でワードクラウド画像を取得する(in English)
+    TODO: entity_idでのワードクラウド画像を取得する(in English)
     """
     try:
-        # TODO: 読み込んだimagefileがbytesで、maskがnumpyを要求するために変換している(why not comment in English)
-        mask = []
-        image_data = await imagefile.read()
-        num_byteio = io.BytesIO(image_data)
-        with Image.open(num_byteio) as img:
-            num_numpy = np.array(img)
-            mask = num_numpy
+        WORD_CLOUD_WIDTH = 1280
+        WORD_CLOUD_HEIGHT = 720
+        MAX_WORDS = 100
 
         sources_response = requests.get(url=f"{SLOPE_COLLECTOR_URL}/sources")
         source_names = []
@@ -154,12 +145,14 @@ async def generate_upload_image_wordcloud(
         wordcloud_text = " ".join(wordcloud_terms)
 
         word_cloud = WordCloud(
+            width=WORD_CLOUD_WIDTH,
+            height=WORD_CLOUD_HEIGHT,
             background_color=BACKGROUND_COLOR,
             font_path=WORD_CLOUD_FONT_PATH,
+            max_words=MAX_WORDS,
             stopwords=STOP_WORDS,
             colormap=COLOR_MAP,
             collocations=False,
-            mask=mask,
         )
         word_cloud.generate(wordcloud_text)
 
@@ -174,7 +167,3 @@ async def generate_upload_image_wordcloud(
 
     except Exception as e:
         raise e
-
-
-router.include_router(entity_image_router)
-router.include_router(frame_file_router)
