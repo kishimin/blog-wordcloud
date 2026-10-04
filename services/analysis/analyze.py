@@ -162,8 +162,8 @@ def generate_wordcloud(entity_id: int):
         file_path = str(OUTPUT_DIRECTORY / f"{output_file_token}.png")
         word_cloud.to_file(filename=file_path)
 
-        with Image.open(file_path) as generated_image:
-            generated_image.save(file_path)
+        image = Image.open(file_path)
+        image.save(file_path)
         return responses.FileResponse(path=file_path, media_type="image/png")
 
     except Exception as e:
@@ -286,8 +286,8 @@ async def generate_frame_file_wordcloud(
         file_path = str(OUTPUT_DIRECTORY / f"{output_file_token}.png")
         word_cloud.to_file(filename=file_path)
 
-        with Image.open(file_path) as generated_image:
-            generated_image.save(file_path)
+        image = Image.open(file_path)
+        image.save(file_path)
         return responses.FileResponse(path=file_path, media_type="image/png")
 
     except Exception as e:
