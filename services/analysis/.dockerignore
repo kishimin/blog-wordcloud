@@ -1,0 +1,12 @@
+**/__pycache__
+.pytest_cache
+tests
+.coverage
+.venv
+
+.env
+.env.*
+
+input
+output
+scripts
