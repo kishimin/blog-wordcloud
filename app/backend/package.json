@@ -1,0 +1,16 @@
+{
+	"name": "backend",
+	"scripts": {
+		"dev": "bun run --hot src/index.ts",
+		"test": "bun test --watch",
+		"code": "bunx biome check",
+		"code:fix": "bunx biome check --write"
+	},
+	"dependencies": {
+		"hono": "^4.13.13"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.0.6",
+		"@types/bun": "latest"
+	}
+}
