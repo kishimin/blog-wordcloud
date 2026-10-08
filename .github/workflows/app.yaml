@@ -16,7 +16,7 @@ jobs:
       - name: Install bun
         uses: oven-sh/setup-bun@v2
       - name: Install dependencies # (assuming your project has dependencies)
-        run: bun install # You can use npm/yarn/pnpm instead if you prefer
+        run: bun install --frozen-lockfile # You can use npm/yarn/pnpm instead if you prefer
       - name: type check
         run: bun typecheck
       - name: Run the formatter, the linter and assist actions
