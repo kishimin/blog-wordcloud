@@ -7,7 +7,8 @@
 		"code:fix": "bunx biome check --write"
 	},
 	"dependencies": {
-		"hono": "^4.13.13"
+		"hono": "^4.13.13",
+		"zod": "^4.6.5"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.0.6",
