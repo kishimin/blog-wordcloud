@@ -5,8 +5,7 @@ on:
 
 defaults:
   run:
-    working-directory: ./app/backend
-
+    working-directory: ./app
 jobs:
   build:
     name: build-app
