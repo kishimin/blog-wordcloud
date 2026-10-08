@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "backend",
+      "name": "kotogumo",
       "dependencies": {
         "hono": "^4.13.13",
         "zod": "^4.6.5",

@@ -1,5 +1,5 @@
 {
-	"name": "backend",
+	"name": "kotogumo",
 	"scripts": {
 		"dev": "bun run --hot backend/src/index.ts",
 		"typecheck": "bunx tsc --noEmit",
