@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { imageSchema } from "./image";
+import { imageSchema } from "./images";
 
 describe("Image Schemas", () => {
 	test("entityIdが1の時エラーとならない", () => {
