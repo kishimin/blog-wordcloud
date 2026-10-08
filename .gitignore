@@ -1,12 +1,10 @@
 # environment
 .env
 
-# output
-output
-
-# local analysis scratch files
-/services/analysis/input/
-/services/analysis/scripts/
+# I/O
+output/
+input/
+scripts/
 
 # Python artifacts
 __pycache__/
