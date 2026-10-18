@@ -5,6 +5,7 @@ import {
   ResponseSchema,
 } from "../../../../schemas/images/images";
 import { env } from "hono/adapter";
+import { Env } from "../../../../types/env";
 
 const app = new OpenAPIHono();
 
@@ -44,7 +45,7 @@ app.openapi(getWordCloudImage, async (c) => {
   try {
     const { entityId } = c.req.param();
 
-    const { KOTOGUMO_FAST_API_URL } = env<{ KOTOGUMO_FAST_API_URL: string }>(c);
+    const { KOTOGUMO_FAST_API_URL } = env<Env>(c);
     const response = await fetch(`${KOTOGUMO_FAST_API_URL}/images/${entityId}`);
 
     const pngBuffer = await response.arrayBuffer();
