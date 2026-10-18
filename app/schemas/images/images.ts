@@ -14,13 +14,9 @@ export const ParamsSchema = z.object({
 });
 
 export const ResponseSchema = z
-	.object({
-		image: z
-			.file()
-			.min(1)
-			.mime("image/png")
-			.openapi({ type: "string", format: "binary" }),
-	})
-	.openapi("Image");
+	.file()
+	.min(1)
+	.mime("image/png")
+	.openapi({ type: "string", format: "binary" });
 
 export type GetImageResponse = z.infer<typeof ResponseSchema>;
