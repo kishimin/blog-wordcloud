@@ -47,6 +47,16 @@ app.openapi(getWordCloudImage, async (c) => {
 		const { KOTOGUMO_FAST_API_URL } = env<Env>(c);
 		const response = await fetch(`${KOTOGUMO_FAST_API_URL}/images/${entityId}`);
 
+		if (!response.ok) {
+			switch (response.status) {
+				case 422:
+					return c.json({ message: await response.text() }, 422);
+
+				default:
+					return c.json({ message: await response.text() }, 500);
+			}
+		}
+
 		const pngBuffer = await response.arrayBuffer();
 
 		return c.body(pngBuffer, 200, {
