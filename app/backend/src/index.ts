@@ -1,12 +1,27 @@
-import { OpenAPIHono } from "@hono/zod-openapi";
+import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
 import images from "./routes/images/images";
 import collectors from "./routes/collectors/collectors";
 
 const app = new OpenAPIHono();
 
-app.get("/", (c) => {
-  return c.text("Hello Hono!");
+const getHealth = createRoute({
+  method: "get" as const,
+  path: "/health",
+  summary: "Get Health",
+  description: "Report that the application process can serve requests.",
+  responses: {
+    200: {
+      description: "success",
+      content: {
+        "application/json": { schema: z.object({ status: z.string() }) },
+      },
+    },
+  },
+});
+
+app.openapi(getHealth, (c) => {
+  return c.json({ status: "ok" }, 200);
 });
 
 app.route("/images", images);

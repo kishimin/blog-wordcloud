@@ -1,9 +1,8 @@
-import { describe, expect, test } from "bun:test";
+import { expect, test } from "bun:test";
 import app from ".";
 
-describe("エントリーポイントのテスト", () => {
-	test("/にアクセスすると、200である", async () => {
-		const response = await app.request("/", { method: "GET" });
-		expect(response.status).toBe(200);
-	});
+test("GET /healthは200を返す", async () => {
+	const response = await app.request("/health");
+
+	expect(response.status).toBe(200);
 });
