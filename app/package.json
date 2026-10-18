@@ -8,6 +8,8 @@
 		"code:fix": "bunx biome check --write"
 	},
 	"dependencies": {
+		"@hono/swagger-ui": "^0.6.1",
+		"@hono/zod-openapi": "^1.6.3",
 		"hono": "^4.13.13",
 		"zod": "^4.6.5"
 	},
