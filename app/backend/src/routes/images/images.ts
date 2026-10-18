@@ -63,7 +63,7 @@ app.openapi(getWordCloudImage, async (c) => {
 			"Content-Type": "image/png",
 		});
 	} catch (error) {
-		return c.json({ error: "外部APIの取得に失敗しました" }, 500);
+		return c.json({ message: "外部APIの取得に失敗しました" }, 500);
 	}
 });
 
