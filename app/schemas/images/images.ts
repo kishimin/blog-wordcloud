@@ -4,7 +4,7 @@ export const ParamsSchema = z.object({
 	entityId: z
 		.string()
 		.min(1, "必須です")
-		.regex(/\d/, "数値です")
+		.regex(/^[1-9][0-9]*$/, "数値です")
 		.openapi({
 			param: {
 				name: "entityId",

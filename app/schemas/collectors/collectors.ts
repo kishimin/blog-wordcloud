@@ -13,7 +13,7 @@ export const EntitiesQueriesSchema = z.object({
 	sourceId: z
 		.string()
 		.min(1)
-		.regex(/\d/)
+		.regex(/^[1-9][0-9]*$/)
 		.openapi({
 			param: {
 				name: "sourceId",
