@@ -25,3 +25,15 @@ dist-ssr
 
 *storybook.log
 storybook-static
+
+# Test reports and caches
+coverage/
+*.lcov
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+*.tsbuildinfo
+
+# Local environment
+.env
