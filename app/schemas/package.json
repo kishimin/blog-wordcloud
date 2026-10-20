@@ -1,0 +1,16 @@
+{
+	"name": "@kotogumo/schemas",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./collectors": "./collectors/collectors.ts",
+		"./images": "./images/images.ts"
+	},
+	"scripts": {
+		"typecheck": "tsc --noEmit -p tsconfig.json"
+	},
+	"dependencies": {
+		"@hono/zod-openapi": "^1.6.3",
+		"zod": "^4.6.5"
+	}
+}
