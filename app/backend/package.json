@@ -3,6 +3,8 @@
 	"private": true,
 	"scripts": {
 		"dev": "bun run --cwd .. --hot backend/src/index.ts",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
 		"typecheck": "tsc --noEmit -p tsconfig.json",
 		"test": "bun test ./src",
 		"test:coverage": "bun test --coverage ./src"
@@ -14,6 +16,7 @@
 		"hono": "^4.13.13"
 	},
 	"devDependencies": {
-		"@types/bun": "latest"
+		"@types/bun": "latest",
+		"typescript": "^7.0.2"
 	}
 }

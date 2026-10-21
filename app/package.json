@@ -7,17 +7,35 @@
 		"schemas"
 	],
 	"scripts": {
+		"lint": "bun run --cwd backend lint && bun run --cwd frontend lint",
+		"lint:backend": "bun run --cwd backend lint",
+		"lint:frontend": "bun run --cwd frontend lint",
 		"typecheck": "bun run --cwd backend typecheck && bun run --cwd schemas typecheck",
 		"typecheck:frontend": "bun run --cwd frontend typecheck",
 		"typecheck:all": "bun run typecheck && bun run typecheck:frontend",
 		"test": "bun run --cwd backend test",
 		"test:coverage": "bun run --cwd backend test:coverage",
-		"code": "bunx biome check backend schemas types package.json tsconfig.json tsconfig.base.json biome.json",
-		"code:fix": "bunx biome check --write backend schemas types package.json tsconfig.json tsconfig.base.json biome.json"
+		"code": "bunx biome check backend schemas types package.json tsconfig.json tsconfig.base.json biome.json eslint.config.base.mjs frontend/eslint.config.mjs",
+		"code:fix": "bunx biome check --write backend schemas types package.json tsconfig.json tsconfig.base.json biome.json eslint.config.base.mjs frontend/eslint.config.mjs"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.0.6",
+		"@eslint/js": "^9.39.4",
 		"@types/bun": "latest",
-		"typescript": "^7.0.2"
+		"@vitest/eslint-plugin": "^1.6.17",
+		"eslint": "^9.39.4",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-import-resolver-typescript": "^4.4.4",
+		"eslint-plugin-import": "^2.32.0",
+		"eslint-plugin-jsdoc": "^62.9.0",
+		"eslint-plugin-jsx-a11y": "^6.10.2",
+		"eslint-plugin-react": "^7.37.5",
+		"eslint-plugin-react-hooks": "^7.0.1",
+		"eslint-plugin-react-refresh": "^0.5.2",
+		"eslint-plugin-testing-library": "^7.16.2",
+		"eslint-plugin-unused-imports": "^4.4.1",
+		"globals": "^17.4.0",
+		"typescript": "~6.0.3",
+		"typescript-eslint": "^8.57.0"
 	}
 }
