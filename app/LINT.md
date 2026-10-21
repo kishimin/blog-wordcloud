@@ -49,4 +49,4 @@ backendのテストは `bun:test` を利用しているため、Vitestプラグ�
 
 Lintが起動できることと、既存コードがすべてのルールに適合していることは別です。違反がある場合、`bun run lint` は終了コード1で失敗します。既存コードの違反を隠すためにルールを無効化したり、一括で `--fix` を実行したりはしていません。
 
-CIはfrontend・backend・schemasに分かれています。frontendとbackendではESLintを、backendとschemasでは従来のBiome検査も実行します。構成と実行範囲は [CIの説明](../.github/workflows/README.md) を参照してください。
+CIは [frontend](../.github/workflows/frontend-ci.yaml)・[backend](../.github/workflows/backend-ci.yaml)・[schemas](../.github/workflows/schemas-ci.yaml) に分かれています。frontendとbackendではESLintを、backendとschemasでは従来のBiome検査も実行します。
