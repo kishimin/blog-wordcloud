@@ -1,0 +1,109 @@
+name: Frontend CI
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Frontend checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: app/frontend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.13
+      - name: Install workspace dependencies
+        id: install
+        run: bun install --frozen-lockfile
+        working-directory: app
+      - name: Type check
+        run: bun run typecheck
+      - name: ESLint
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: bun run lint
+      - name: Check ESLint configuration formatting
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: bunx biome check eslint.config.mjs
+
+  unit-test:
+    name: Frontend tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    defaults:
+      run:
+        working-directory: app/frontend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.13
+      - name: Install workspace dependencies
+        run: bun install --frozen-lockfile
+        working-directory: app
+      - name: Install Chromium and system dependencies
+        run: bunx --no-install playwright install --with-deps chromium
+      - name: Run tests with coverage and JSON report
+        id: tests
+        run: bun run test:coverage --reporter=default --reporter=json --outputFile=coverage/test-result.json
+      - name: Upload test results and coverage
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-test-results
+          path: app/frontend/coverage/
+          if-no-files-found: warn
+      - name: Report test results
+        if: ${{ !cancelled() && steps.tests.outcome != 'skipped' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('node:fs');
+            const resultPath = 'app/frontend/coverage/test-result.json';
+            if (!fs.existsSync(resultPath)) {
+              core.setFailed(`Test result file not found: ${resultPath}`);
+              return;
+            }
+            const result = JSON.parse(fs.readFileSync(resultPath, 'utf8'));
+            if (!Number.isInteger(result.numTotalTests) || result.numTotalTests < 1) {
+              core.setFailed('No frontend test cases were reported.');
+              return;
+            }
+            const runLink = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              '## Frontend test results',
+              result.success ? '**All tests passed**' : '**Some tests failed**',
+              `Tests: ${result.numTotalTests}; passed: ${result.numPassedTests}; failed: ${result.numFailedTests}; pending: ${result.numPendingTests}`,
+              `[Full results and coverage](${runLink})`,
+            ].join('\n\n');
+            await core.summary.addRaw(body).write();
+            const pr = context.payload.pull_request;
+            if (pr?.head?.repo?.full_name === `${context.repo.owner}/${context.repo.repo}` && context.actor !== 'dependabot[bot]') {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: pr.number,
+                body,
+              });
+            }
