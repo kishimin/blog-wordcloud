@@ -7,6 +7,8 @@
 		"schemas"
 	],
 	"scripts": {
+		"format:yaml": "prettier --write \"../.github/workflows/*.{yml,yaml}\"",
+		"format:yaml:check": "prettier --check \"../.github/workflows/*.{yml,yaml}\"",
 		"lint": "bun run --cwd backend lint && bun run --cwd frontend lint",
 		"lint:backend": "bun run --cwd backend lint",
 		"lint:frontend": "bun run --cwd frontend lint",
@@ -35,6 +37,7 @@
 		"eslint-plugin-testing-library": "^7.16.2",
 		"eslint-plugin-unused-imports": "^4.4.1",
 		"globals": "^17.4.0",
+		"prettier": "3.9.10",
 		"typescript": "~6.0.3",
 		"typescript-eslint": "^8.57.0"
 	}
