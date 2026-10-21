@@ -7,7 +7,6 @@
 		"schemas"
 	],
 	"scripts": {
-		"dev": "bun run --hot backend/src/index.ts",
 		"typecheck": "bun run --cwd backend typecheck && bun run --cwd schemas typecheck",
 		"typecheck:frontend": "bun run --cwd frontend typecheck",
 		"typecheck:all": "bun run typecheck && bun run typecheck:frontend",

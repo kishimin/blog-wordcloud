@@ -2,6 +2,7 @@
 	"name": "@kotogumo/backend",
 	"private": true,
 	"scripts": {
+		"dev": "bun run --cwd .. --hot backend/src/index.ts",
 		"typecheck": "tsc --noEmit -p tsconfig.json",
 		"test": "bun test ./src",
 		"test:coverage": "bun test --coverage ./src"
