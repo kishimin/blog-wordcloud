@@ -36,6 +36,8 @@ jobs:
         id: install
         run: bun install --frozen-lockfile
         working-directory: app
+      - name: Build
+        run: bun run build
       - name: Type check
         run: bun run typecheck
       - name: ESLint
