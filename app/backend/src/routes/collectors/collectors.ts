@@ -1,8 +1,10 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import axios from "axios";
 import { env } from "hono/adapter";
 import {
 	EntitiesQueriesSchema,
 	EntitiesResponseSchema,
+	type Source,
 	SourcesResponseSchema,
 } from "../../../../schemas/collectors/collectors";
 import type { Env } from "../../../../types/env";
@@ -41,13 +43,15 @@ export const getSources = createRoute({
 app.openapi(getSources, async (c) => {
 	try {
 		const { SLOPE_COLLECTOR_FAST_API_URL } = env<Env>(c);
-		const response = await fetch(`${SLOPE_COLLECTOR_FAST_API_URL}/sources`);
-		const data = await response.json();
+		const response = await axios.get<{ sources: Source[] }>(
+			`${SLOPE_COLLECTOR_FAST_API_URL}/sources`,
+		);
+		const data = response.data;
 
 		const sources = SourcesResponseSchema.parse(data.sources);
 
 		return c.json(sources, 200);
-	} catch (error) {
+	} catch {
 		return c.json({ message: "外部APIの取得に失敗しました" }, 500);
 	}
 });
@@ -84,6 +88,13 @@ export const getEntities = createRoute({
 	},
 });
 
+type PythonEntity = {
+	id: number;
+	source_id: number;
+	name: string;
+	is_active: boolean;
+};
+
 app.openapi(getEntities, async (c) => {
 	try {
 		const { sourceId } = c.req.query();
@@ -91,16 +102,21 @@ app.openapi(getEntities, async (c) => {
 		const { SLOPE_COLLECTOR_FAST_API_URL } = env<Env>(c);
 		const params = { source_id: sourceId };
 		const query = new URLSearchParams(params);
-		const response = await fetch(
+		const response = await axios.get<{ entities: PythonEntity[] }>(
 			`${SLOPE_COLLECTOR_FAST_API_URL}/entities?${query}`,
 		);
+		const data = response.data;
 
-		const data = await response.json();
-
-		const sources = EntitiesResponseSchema.parse(data.entities);
+		const sources = EntitiesResponseSchema.parse(
+			data.entities.map((entity) => ({
+				...entity,
+				isActive: entity.is_active,
+				sourceId: entity.source_id,
+			})),
+		);
 
 		return c.json(sources, 200);
-	} catch (error) {
+	} catch {
 		return c.json({ message: "外部APIの取得に失敗しました" }, 500);
 	}
 });

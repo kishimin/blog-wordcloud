@@ -13,6 +13,7 @@
 		"@hono/swagger-ui": "^0.6.1",
 		"@hono/zod-openapi": "^1.6.3",
 		"@kotogumo/schemas": "workspace:*",
+		"axios": "^1.20.0",
 		"hono": "^4.13.13"
 	},
 	"devDependencies": {
