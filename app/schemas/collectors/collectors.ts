@@ -1,13 +1,15 @@
 import { z } from "@hono/zod-openapi";
 
-export const SourcesResponseSchema = z.array(
-	z
-		.object({
-			id: z.number().min(1),
-			name: z.string(),
-		})
-		.openapi("Source"),
-);
+export const SourceSchema = z
+	.object({
+		id: z.number().min(1),
+		name: z.string(),
+	})
+	.openapi("Source");
+
+export type Source = z.infer<typeof SourceSchema>;
+
+export const SourcesResponseSchema = z.array(SourceSchema);
 
 export const EntitiesQueriesSchema = z.object({
 	sourceId: z
@@ -22,16 +24,15 @@ export const EntitiesQueriesSchema = z.object({
 		}),
 });
 
-export const EntitiesResponseSchema = z.array(
-	z
-		.object({
-			id: z.number().min(1),
-			source_id: z.number().min(1),
-			name: z.string(),
-			is_active: z.boolean(),
-		})
-		.transform(({ source_id, is_active, id, name }) => {
-			return { id, sourceId: source_id, name, isActive: is_active };
-		})
-		.openapi("Entity"),
-);
+export const EntitySchema = z
+	.object({
+		id: z.number().min(1),
+		sourceId: z.number().min(1),
+		name: z.string(),
+		isActive: z.boolean(),
+	})
+	.openapi("Entity");
+
+export type Entity = z.infer<typeof EntitySchema>;
+
+export const EntitiesResponseSchema = z.array(EntitySchema);
