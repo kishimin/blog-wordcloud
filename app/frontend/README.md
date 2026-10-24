@@ -1,5 +1,27 @@
 # React + TypeScript + Vite
 
+## Browser tests
+
+Run these commands from `app/frontend` after installing the workspace dependencies:
+
+```sh
+bunx --no-install playwright install chromium
+bun run test:e2e
+```
+
+Use `bun run test:e2e:ui` for the interactive runner. Playwright starts and stops
+Vite on `127.0.0.1:4173`; the port must be available. HTML reports are written to
+`playwright-report/`, and failure traces and screenshots to `test-results/`.
+These generated directories are ignored by Git.
+
+Tests live in `e2e/` and use `.small.test.ts`, `.medium.test.ts`, or `.large.test.ts`
+according to their dependencies. The initial counter test is Medium because it
+uses a local Vite server and browser without external services. It checks the
+current scaffold; word-cloud display and download acceptance tests are pending
+implementation of those features.
+
+Storybook uses its separate Vitest runner (`bun run test:storybook`).
+
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
 Currently, two official plugins are available:

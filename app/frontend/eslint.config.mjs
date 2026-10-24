@@ -27,6 +27,7 @@ export default defineConfig([
 	},
 	{
 		files: testFiles,
+		ignores: ["e2e/**"],
 		extends: [testingLibrary.configs["flat/react"], vitest.configs.recommended],
 		rules: {
 			"@typescript-eslint/no-unsafe-call": "off",
@@ -40,9 +41,13 @@ export default defineConfig([
 	},
 	{
 		files: testFiles,
-		ignores: ["src/**"],
+		ignores: ["src/**", "e2e/**"],
 		// These tests are outside the TypeScript project used by typed linting.
 		settings: { vitest: { typecheck: false } },
+	},
+	{
+		files: ["e2e/**/*.ts"],
+		languageOptions: { globals: globals.node },
 	},
 	{
 		files: ["*.{js,mjs,ts}", ".storybook/**/*.{ts,tsx}"],
