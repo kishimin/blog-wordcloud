@@ -1,5 +1,5 @@
 import vitest from "@vitest/eslint-plugin";
-import { defineConfig, globalIgnores } from "eslint/config";
+import { defineConfig } from "eslint/config";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
@@ -10,8 +10,6 @@ import { createCommonConfig, testFiles } from "../eslint.config.base.mjs";
 
 export default defineConfig([
 	...createCommonConfig(import.meta.dirname, globals.browser),
-	// This nested scaffold has its own package and is not part of the Vite app.
-	globalIgnores(["playwright@latest/**"]),
 	{
 		files: ["**/*.{ts,tsx}"],
 		extends: [
