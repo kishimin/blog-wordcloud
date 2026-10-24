@@ -1,5 +1,7 @@
 # environment
 .env
+.env.development
+.env.test
 
 # I/O
 output/
